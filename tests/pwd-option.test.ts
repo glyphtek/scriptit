@@ -104,9 +104,9 @@ test("Library: workingDirectory error handling", async () => {
 test("CLI: --pwd option works with exec command", async () => {
   return new Promise<void>((resolve, reject) => {
     const scriptPath = path.join(SCRIPTS_DIR, "pwd-test.ts");
-    const cliPath = path.join(originalCwd, "bin", "scriptit.js");
+    const cliPath = path.join(originalCwd, "bin", "scriptit.sh");
     
-    const child = spawn("bun", [
+    const child = spawn("bash", [
       cliPath,
       "--pwd", TEST_DIR,
       "exec", "./scripts/pwd-test.ts"
@@ -152,9 +152,9 @@ test("CLI: --pwd option works with exec command", async () => {
 test("CLI: --pwd option error handling", async () => {
   return new Promise<void>((resolve, reject) => {
     const nonExistentDir = path.join(TEST_DIR, "does-not-exist");
-    const cliPath = path.join(originalCwd, "bin", "scriptit.js");
+    const cliPath = path.join(originalCwd, "bin", "scriptit.sh");
     
-    const child = spawn("bun", [
+    const child = spawn("bash", [
       cliPath,
       "--pwd", nonExistentDir,
       "exec", "./scripts/pwd-test.ts"
