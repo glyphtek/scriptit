@@ -73,23 +73,23 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
       with:
-        node-version: '18'
+        bun-version: 'latest'
     
     - name: Install dependencies
-      run: npm install
+      run: bun install --frozen-lockfile
     
     - name: Build
-      run: npm run build
+      run: bun run build
     
     - name: Check package contents
-      run: npm pack --dry-run
+      run: bun x npm pack --dry-run
     
     - name: Verify package size
       run: |
-        SIZE=$(npm pack --dry-run 2>&1 | grep "package size" | awk '{print $3}')
+        SIZE=$(bun x npm pack --dry-run 2>&1 | grep "package size" | awk '{print $3}')
         echo "Package size: $SIZE"
         # Ensure package is reasonable size (less than 100kB)
         if [[ $(echo "$SIZE" | sed 's/[^0-9.]//g') > 100 ]]; then
