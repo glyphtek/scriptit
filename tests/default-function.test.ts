@@ -107,9 +107,16 @@ export function someOtherFunction() {
 }
 `;
 
-  await fs.writeFile(testScriptPath, testScriptContent);
-
   try {
+    // Ensure the file is written and exists
+    await fs.writeFile(testScriptPath, testScriptContent);
+    
+    // Verify the file was created
+    const fileExists = await fs.access(testScriptPath).then(() => true).catch(() => false);
+    if (!fileExists) {
+      throw new Error(`Failed to create test file: ${testScriptPath}`);
+    }
+
     const runner = await createScriptRunner({
       scriptsDir: SCRIPTS_DIR,
       tmpDir: TMP_DIR,
@@ -119,7 +126,12 @@ export function someOtherFunction() {
       "must export either an 'execute' function or a 'default' function"
     );
   } finally {
-    // Clean up
-    await fs.unlink(testScriptPath).catch(() => {});
+    // Clean up - ensure file is removed even if test fails
+    try {
+      await fs.unlink(testScriptPath);
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn(`Failed to clean up test file: ${testScriptPath}`, error);
+    }
   }
 }); 
