@@ -32,7 +32,7 @@ jobs:
       run: bun test
 
     - name: Test CLI
-      run: bun ./bin/scriptit.js --help
+      run: ./bin/scriptit.sh --help
 
   test-node:
     name: Test with Node.js
@@ -60,7 +60,7 @@ jobs:
       run: npx tsc
 
     - name: Test CLI
-      run: node ./bin/scriptit.js --help
+      run: ./bin/scriptit.sh --help
 
     - name: Test library import
       run: node -e "import('./dist/lib.js').then(() => console.log('✅ Library import successful'))"

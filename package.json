@@ -55,9 +55,9 @@
   "scripts": {
     "build": "bun clean && tsc",
     "build:bun": "bun clean && bun build ./src/lib.ts ./src/cli.ts --outdir ./dist --target bun --splitting --minify",
-    "dev": "bun ./bin/scriptit.js",
-    "dev:watch": "bun --watch ./bin/scriptit.js",
-    "start": "bun ./bin/scriptit.js",
+    "dev": "./bin/scriptit.sh",
+    "dev:watch": "bun --watch ./bin/scriptit.sh",
+    "start": "./bin/scriptit.sh",
     "lint": "bunx @biomejs/biome lint ./src",
     "format": "bunx @biomejs/biome format --write ./src",
     "check": "bunx @biomejs/biome check --apply ./src",
@@ -65,7 +65,7 @@
     "prepublishOnly": "bun run build && bun test",
     "test": "bun test",
     "test:lib": "bun test tests/lib-example.test.ts tests/lib-integration.test.ts tests/run-lib-example.test.ts tests/default-function.test.ts tests/pwd-option.test.ts",
-    "test:ui": "cd examples/ui && bun ../../bin/scriptit.js --no-tui",
+    "test:ui": "cd examples/ui && ../../bin/scriptit.sh --no-tui",
     "test:examples": "cd examples/lib && bun start"
   },
   "dependencies": {

@@ -7,7 +7,7 @@
 - [x] Code is properly formatted: `bun run format`
 - [x] No linting errors: `bun run lint`
 - [x] TypeScript compiles without errors: `bun run build`
-- [x] CLI works correctly: `node ./bin/scriptit.js --help`
+- [x] CLI works correctly: `./bin/scriptit.sh --help`
 
 ### ✅ Documentation
 - [x] README.md is comprehensive and up-to-date
@@ -56,7 +56,7 @@ bun run build
 bun test
 
 # Test CLI
-node ./bin/scriptit.js --help
+./bin/scriptit.sh --help
 ```
 
 ### 3. Verify Package Contents
@@ -111,8 +111,8 @@ After publishing to npm, create a GitHub release:
 - Ensure version number is incremented
 
 **CLI Not Working:**
-- Check shebang in bin/scriptit.js: `#!/usr/bin/env node`
-- Verify file permissions: `chmod +x bin/scriptit.js`
+- Check shebang in bin/scriptit.sh: `#!/bin/bash`
+- Verify file permissions: `chmod +x bin/scriptit.sh`
 - Test with both Node.js and Bun
 
 ### Version Management

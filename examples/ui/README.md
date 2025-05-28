@@ -43,26 +43,23 @@ examples/ui/
 ## Quick Start
 
 ```bash
-# Navigate to this example
-cd examples/ui
+# Run the TUI
+bun ../../bin/scriptit.sh
 
-# Run with interactive TUI (default)
-bun ../../bin/scriptit.js
+# Run without TUI
+bun ../../bin/scriptit.sh --no-tui
 
-# Or run without TUI to see available scripts
-bun ../../bin/scriptit.js --no-tui
-
-# Execute a specific script directly
-bun ../../bin/scriptit.js exec hello.ts
+# Execute a specific script
+bun ../../bin/scriptit.sh exec hello.ts
 
 # Execute with custom environment variables
-bun ../../bin/scriptit.js exec hello.ts --env MY_CUSTOM_VAR=value
+bun ../../bin/scriptit.sh exec hello.ts --env MY_CUSTOM_VAR=value
 
-# Use custom config file
-bun ../../bin/scriptit.js --config ./runner.config.js exec hello.ts
+# Use custom configuration
+bun ../../bin/scriptit.sh --config ./runner.config.js exec hello.ts
 
 # Initialize a new project structure
-bun ../../bin/scriptit.js init --scripts-dir ./my-scripts --tmp-dir ./my-tmp
+bun ../../bin/scriptit.sh init --scripts-dir ./my-scripts --tmp-dir ./my-tmp
 ```
 
 ## Terminal UI (TUI) Features
@@ -153,13 +150,13 @@ ScriptIt supports running from different directories using the `--pwd` option:
 
 ```bash
 # Run from project root, but execute in examples/ui context
-bun bin/scriptit.js --pwd examples/ui run
+bun bin/scriptit.sh --pwd examples/ui run
 
 # Execute specific script with working directory
-bun bin/scriptit.js --pwd examples/ui exec ./scripts/hello.ts
+bun bin/scriptit.sh --pwd examples/ui exec ./scripts/hello.ts
 
 # Initialize project in specific directory
-bun bin/scriptit.js --pwd /tmp/my-scripts init
+bun bin/scriptit.sh --pwd /tmp/my-scripts init
 ```
 
 This is useful for:
@@ -197,7 +194,7 @@ This is useful for:
 
 ## Next Steps
 
-1. **Explore the TUI** - Run `bun ../../bin/scriptit.js` and try the interface
+1. **Explore the TUI** - Run `bun ../../bin/scriptit.sh` and try the interface
 2. **Create Custom Scripts** - Add your own scripts to the `scripts/` directory
 3. **Customize Configuration** - Modify `runner.config.js` for your needs
 4. **Try Library Usage** - Check out `../lib/` for programmatic integration
