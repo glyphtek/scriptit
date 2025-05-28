@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2025-01-28
+
+### Fixed
+- **Symlink Resolution**: Fixed shell script to properly resolve symlinks in global installations
+- **Global Binary Path**: Improved path detection for npm/bun global installations where binary is symlinked
+- **CLI File Location**: Enhanced logic to find CLI file when script is executed via symlink
+
 ## [0.4.1] - 2025-01-28
 
 ### Fixed

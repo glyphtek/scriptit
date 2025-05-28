@@ -10,13 +10,24 @@
 
 set -e
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the directory where this script is actually located (resolve symlinks)
+# This is important for global installations where the binary might be symlinked
+if [ -L "${BASH_SOURCE[0]}" ]; then
+    # If it's a symlink, resolve it
+    SCRIPT_PATH="$(readlink "${BASH_SOURCE[0]}")"
+    if [[ "$SCRIPT_PATH" != /* ]]; then
+        # If it's a relative symlink, make it absolute
+        SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$SCRIPT_PATH"
+    fi
+else
+    SCRIPT_PATH="${BASH_SOURCE[0]}"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 
 # Try to locate the CLI file in different possible locations
 # 1. Development environment: ../dist/cli.js (relative to bin/)
-# 2. Published package: ../dist/cli.js (should still work)
-# 3. Alternative published structure: ./dist/cli.js (if bin/ is in root)
+# 2. Published package: ../dist/cli.js (should work for most cases)
 CLI_FILE=""
 if [ -f "$SCRIPT_DIR/../dist/cli.js" ]; then
     CLI_FILE="$SCRIPT_DIR/../dist/cli.js"
