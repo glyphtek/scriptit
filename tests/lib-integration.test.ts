@@ -4,6 +4,10 @@
 import { test, expect, beforeAll } from "bun:test";
 import path from "node:path";
 import fs from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const LIB_EXAMPLE_DIR = path.join(__dirname, "../examples/lib");
 
