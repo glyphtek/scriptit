@@ -12,7 +12,25 @@ set -e
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLI_FILE="$SCRIPT_DIR/../dist/cli.js"
+
+# Try to locate the CLI file in different possible locations
+# 1. Development environment: ../dist/cli.js (relative to bin/)
+# 2. Published package: ../dist/cli.js (should still work)
+# 3. Alternative published structure: ./dist/cli.js (if bin/ is in root)
+CLI_FILE=""
+if [ -f "$SCRIPT_DIR/../dist/cli.js" ]; then
+    CLI_FILE="$SCRIPT_DIR/../dist/cli.js"
+elif [ -f "$SCRIPT_DIR/dist/cli.js" ]; then
+    CLI_FILE="$SCRIPT_DIR/dist/cli.js"
+elif [ -f "$SCRIPT_DIR/../lib/cli.js" ]; then
+    CLI_FILE="$SCRIPT_DIR/../lib/cli.js"
+else
+    # Last resort: try to find it relative to the package
+    PACKAGE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+    if [ -f "$PACKAGE_ROOT/dist/cli.js" ]; then
+        CLI_FILE="$PACKAGE_ROOT/dist/cli.js"
+    fi
+fi
 
 # Initialize runtime selection
 SELECTED_RUNTIME=""
@@ -64,6 +82,22 @@ set -- "${REMAINING_ARGS[@]}"
 # Check environment variable if no runtime flag was provided
 if [ -z "$SELECTED_RUNTIME" ] && [ -n "$SCRIPTIT_RUNTIME" ]; then
     SELECTED_RUNTIME="$SCRIPTIT_RUNTIME"
+fi
+
+# Check if CLI file exists
+if [ -z "$CLI_FILE" ] || [ ! -f "$CLI_FILE" ]; then
+    echo "❌ ScriptIt Error: CLI file not found"
+    echo "💡 Searched locations:"
+    echo "  - $SCRIPT_DIR/../dist/cli.js"
+    echo "  - $SCRIPT_DIR/dist/cli.js"
+    echo "  - $SCRIPT_DIR/../lib/cli.js"
+    if [ -n "$PACKAGE_ROOT" ]; then
+        echo "  - $PACKAGE_ROOT/dist/cli.js"
+    fi
+    echo ""
+    echo "💡 This might indicate a corrupted installation."
+    echo "💡 Try reinstalling: npm install -g @glyphtek/scriptit"
+    exit 1
 fi
 
 # Function to check if a command exists
@@ -156,13 +190,6 @@ show_runtime_info() {
         echo ""
     fi
 }
-
-# Check if CLI file exists
-if [ ! -f "$CLI_FILE" ]; then
-    echo "❌ ScriptIt Error: CLI file not found at $CLI_FILE"
-    echo "💡 Try running 'npm run build' or 'bun run build' first"
-    exit 1
-fi
 
 # Validate selected runtime
 validate_runtime "$SELECTED_RUNTIME"

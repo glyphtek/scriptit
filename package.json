@@ -1,6 +1,6 @@
 {
   "name": "@glyphtek/scriptit",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A cross-runtime CLI and library for running scripts with environment management, TUI, and support for lambda functions. Optimized for Bun with compatibility for Node.js and Deno.",
   "author": "Sergio Romano <sergio.h.romano@gmail.com>",
   "license": "MIT",
