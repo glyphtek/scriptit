@@ -1,7 +1,7 @@
 {
   "name": "@glyphtek/scriptit",
-  "version": "0.3.0",
-  "description": "A cross-runtime CLI and library for running scripts with environment management, TUI, and support for lambda functions. Compatible with Node.js, Deno, and Bun.",
+  "version": "0.4.0",
+  "description": "A cross-runtime CLI and library for running scripts with environment management, TUI, and support for lambda functions. Optimized for Bun with compatibility for Node.js and Deno.",
   "author": "Sergio Romano <sergio.h.romano@gmail.com>",
   "license": "MIT",
   "type": "module",
@@ -43,7 +43,7 @@
     }
   },
   "bin": {
-    "scriptit": "./bin/scriptit.js"
+    "scriptit": "./bin/scriptit.sh"
   },
   "files": [
     "dist",
@@ -87,8 +87,8 @@
     "typescript": "^5.0.0"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "bun": ">=1.0.0"
+    "bun": ">=1.0.0",
+    "node": ">=18.0.0"
   },
   "trustedDependencies": [
     "@biomejs/biome"
