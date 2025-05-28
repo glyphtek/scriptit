@@ -9,14 +9,16 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const LIB_EXAMPLE_DIR = path.join(__dirname, "../examples/lib");
+const LIB_EXAMPLE_DIR = path.resolve(__dirname, "../examples/lib");
 
 beforeAll(async () => {
   // Ensure the lib example directory exists
+  console.log("Checking library example directory:", LIB_EXAMPLE_DIR);
   const exists = await fs.access(LIB_EXAMPLE_DIR).then(() => true).catch(() => false);
   if (!exists) {
     throw new Error(`Library example directory not found: ${LIB_EXAMPLE_DIR}`);
   }
+  console.log("Library example directory exists");
 });
 
 test("library example - can import and run without errors", async () => {
@@ -65,21 +67,35 @@ test("library example - package.json is properly configured", async () => {
 });
 
 test("library example - has proper directory structure", async () => {
-  // Check for required directories and files
-  const requiredPaths = [
-    "src",
-    "src/index.ts",
-    "scripts",
-    "tmp",
-    "package.json",
-    "env.example",
-    "README.md",
-  ];
+  // Test each required path explicitly with better error handling
   
-  for (const relativePath of requiredPaths) {
-    const fullPath = path.join(LIB_EXAMPLE_DIR, relativePath);
-    const exists = await fs.access(fullPath).then(() => true).catch(() => false);
-    expect(exists).toBe(true);
+  try {
+    // Check src directory
+    await fs.access(path.join(LIB_EXAMPLE_DIR, "src"));
+    
+    // Check src/index.ts file
+    await fs.access(path.join(LIB_EXAMPLE_DIR, "src", "index.ts"));
+    
+    // Check scripts directory
+    await fs.access(path.join(LIB_EXAMPLE_DIR, "scripts"));
+    
+    // Check tmp directory
+    await fs.access(path.join(LIB_EXAMPLE_DIR, "tmp"));
+    
+    // Check package.json file
+    await fs.access(path.join(LIB_EXAMPLE_DIR, "package.json"));
+    
+    // Check env.example file
+    await fs.access(path.join(LIB_EXAMPLE_DIR, "env.example"));
+    
+    // Check README.md file
+    await fs.access(path.join(LIB_EXAMPLE_DIR, "README.md"));
+    
+    // If we get here, all files exist
+    expect(true).toBe(true);
+  } catch (error) {
+    // If any file is missing, the test should fail with a descriptive message
+    throw new Error(`Directory structure check failed: ${error.message}`);
   }
 });
 
