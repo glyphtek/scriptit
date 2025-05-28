@@ -1,0 +1,22 @@
+{
+  "name": "scriptit-lib-example",
+  "version": "1.0.0",
+  "description": "Example of using ScriptIt as a library for programmatic script execution",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target node",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@glyphtek/scriptit": "file:../../"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.20",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+} 
