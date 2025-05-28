@@ -94,9 +94,9 @@ export async function runTUI(configPath, initialScriptsDir, initialTmpDir, initi
             content += `{yellow-fg}Scripts Dir:{/} ${path.relative(process.cwd(), initialScriptsDir)}\n`;
             content += `{yellow-fg}Temp Dir:{/} ${path.relative(process.cwd(), initialTmpDir)}\n`;
             content += `{yellow-fg}Env Vars:{/} ${Object.keys(initialEnv).length} loaded\n`;
-            if (initialConfigValues.excludePatterns &&
-                initialConfigValues.excludePatterns.length > 0) {
-                content += `{yellow-fg}Exclude:{/} ${initialConfigValues.excludePatterns.join(", ")}\n`;
+            const excludePatterns = initialConfigValues.excludePatterns;
+            if (excludePatterns && Array.isArray(excludePatterns) && excludePatterns.length > 0) {
+                content += `{yellow-fg}Exclude:{/} ${excludePatterns.join(", ")}\n`;
             }
             configBox.setContent(content);
         }
@@ -167,7 +167,8 @@ export async function runTUI(configPath, initialScriptsDir, initialTmpDir, initi
             screen.render();
         }
         async function executeSelectedScript() {
-            const selectedIndex = fileList.selected;
+            const selectedIndex = fileList
+                .selected;
             if (selectedIndex < 0 || selectedIndex >= currentScriptPaths.length) {
                 outputLog.log("No script selected");
                 return;
@@ -281,7 +282,8 @@ export async function runTUI(configPath, initialScriptsDir, initialTmpDir, initi
         screen.render();
     }
     catch (error) {
-        console.error("Error initializing TUI:", error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error("Error initializing TUI:", errorMessage);
         process.exit(1);
     }
 }

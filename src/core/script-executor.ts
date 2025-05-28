@@ -4,10 +4,10 @@ import path from "node:path";
 import { logger } from "../common/logger/index.js";
 import type { ScriptContext, ScriptModule } from "../common/types/index.js";
 
-export type ScriptExecutorOptions = {};
+export type ScriptExecutorOptions = Record<string, never>;
 
 export interface ScriptExecutor {
-  run: (scriptPath: string, context: ScriptContext) => Promise<any>;
+  run: (scriptPath: string, context: ScriptContext) => Promise<unknown>;
 }
 
 /**
@@ -18,23 +18,23 @@ export function createScriptExecutorInstance(
   options: ScriptExecutorOptions = {},
 ): ScriptExecutor {
   return {
-    run: async (scriptPath: string, context: ScriptContext): Promise<any> => {
+    run: async (
+      scriptPath: string,
+      context: ScriptContext,
+    ): Promise<unknown> => {
       const absoluteScriptPath = path.isAbsolute(scriptPath)
         ? scriptPath
-        : path.resolve(process.cwd(), scriptPath);
+        : path.resolve(scriptPath);
 
       if (!pathExistsSync(absoluteScriptPath)) {
-        const error = new Error(`Script file not found: ${absoluteScriptPath}`);
-        logger.error(`Script executor: ${error.message}`);
-        throw error;
+        throw new Error(`Script file not found: ${absoluteScriptPath}`);
       }
 
       logger.debug(
-        `Script executor: Loading script module: ${absoluteScriptPath}`,
+        `Script executor: Loading script ${path.basename(absoluteScriptPath)}`,
       );
 
       try {
-        // Import the script module with cache busting
         const scriptModule = (await import(
           `file://${absoluteScriptPath}?v=${Date.now()}`
         )) as ScriptModule;
@@ -43,8 +43,8 @@ export function createScriptExecutorInstance(
         // Priority: default > execute (to support lambda functions and other scenarios)
         let executeFunction: (
           context: ScriptContext,
-          tearUpResult?: any,
-        ) => Promise<any> | any;
+          tearUpResult?: unknown,
+        ) => Promise<unknown> | unknown;
         let functionName: string;
 
         if (typeof scriptModule.default === "function") {
@@ -60,12 +60,12 @@ export function createScriptExecutorInstance(
         }
 
         // Execute tearUp if it exists
-        let tearUpResult: any;
+        let tearUpResult: unknown;
         if (typeof scriptModule.tearUp === "function") {
           logger.debug(
             `Script executor: Running tearUp for ${path.basename(absoluteScriptPath)}`,
           );
-          context.log(`Running tearUp()`);
+          context.log("Running tearUp()");
           tearUpResult = await scriptModule.tearUp(context);
           logger.debug(
             `Script executor: tearUp completed for ${path.basename(absoluteScriptPath)}`,
@@ -78,16 +78,13 @@ export function createScriptExecutorInstance(
         );
         context.log(`Running ${functionName}()`);
         const executeResult = await executeFunction(context, tearUpResult);
-        logger.debug(
-          `Script executor: ${functionName} completed for ${path.basename(absoluteScriptPath)}`,
-        );
 
         // Execute tearDown if it exists
         if (typeof scriptModule.tearDown === "function") {
           logger.debug(
             `Script executor: Running tearDown for ${path.basename(absoluteScriptPath)}`,
           );
-          context.log(`Running tearDown()`);
+          context.log("Running tearDown()");
           await scriptModule.tearDown(context, executeResult, tearUpResult);
           logger.debug(
             `Script executor: tearDown completed for ${path.basename(absoluteScriptPath)}`,
@@ -95,9 +92,11 @@ export function createScriptExecutorInstance(
         }
 
         return executeResult;
-      } catch (error: any) {
-        logger.error(`Script executor error: ${error.message}`);
-        context.log(`Error: ${error.message}`);
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        logger.error(`Script executor error: ${errorMessage}`);
+        context.log(`Error: ${errorMessage}`);
         throw error;
       }
     },

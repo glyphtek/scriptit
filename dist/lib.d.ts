@@ -8,12 +8,12 @@ export interface CreateScriptRunnerOptions extends Partial<Omit<RunnerConfig, "l
 export interface ScriptRunnerInstance {
     config: EffectiveConfig;
     environment: Record<string, string | undefined>;
-    executeScript: (scriptPath: string, executionParams?: Record<string, any>, customLogger?: (message: string) => void) => Promise<any>;
+    executeScript: (scriptPath: string, executionParams?: Record<string, unknown>, customLogger?: (message: string) => void) => Promise<unknown>;
     runTUI: () => Promise<void>;
     listScripts: () => Promise<string[]>;
-    on: (eventName: string, listener: (...args: any[]) => void) => ScriptRunnerInstance;
-    off: (eventName: string, listener: (...args: any[]) => void) => ScriptRunnerInstance;
-    emit: (eventName: string, ...args: any[]) => boolean;
+    on: (eventName: string, listener: (...args: unknown[]) => void) => ScriptRunnerInstance;
+    off: (eventName: string, listener: (...args: unknown[]) => void) => ScriptRunnerInstance;
+    emit: (eventName: string, ...args: unknown[]) => boolean;
 }
 export declare function createScriptRunner(options?: CreateScriptRunnerOptions): Promise<ScriptRunnerInstance>;
 export type { RunnerConfig, ScriptContext, ScriptModule, } from "./common/types/index.js";

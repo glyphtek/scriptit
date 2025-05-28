@@ -57,7 +57,8 @@ export async function createScriptRunner(options = {}) {
             // Return relative paths from scriptsDir for easier display/usage
             return scriptPaths.map((fullPath) => path.relative(effectiveConfig.scriptsDir, fullPath));
         },
-        executeScript: async (scriptPath, executionParams = {}, customLogger) => {
+        executeScript: async (scriptPath, executionParams, customLogger) => {
+            const params = executionParams || Object.create(null);
             const absoluteScriptPath = path.isAbsolute(scriptPath)
                 ? scriptPath
                 : path.resolve(effectiveConfig.scriptsDir, scriptPath);
@@ -66,11 +67,11 @@ export async function createScriptRunner(options = {}) {
                 emitter.emit("error", "executeScript", err, absoluteScriptPath);
                 throw err;
             }
-            emitter.emit("script:beforeExecute", absoluteScriptPath, executionParams);
+            emitter.emit("script:beforeExecute", absoluteScriptPath, params);
             // Build context for this specific execution
             const scriptSpecificEnv = {
                 ...finalEnvironment,
-                ...(executionParams.env || {}),
+                ...(params.env || {}),
             };
             const contextLog = customLogger ||
                 ((msg) => {
@@ -83,10 +84,10 @@ export async function createScriptRunner(options = {}) {
                 tmpDir: effectiveConfig.tmpDir,
                 configPath: effectiveConfig.loadedConfigPath,
                 log: contextLog,
-                params: executionParams.params || {}, // User-defined params for the script
+                params: params.params || {}, // User-defined params for the script
                 // Spread other potential context items defined in RunnerConfig or executionParams
                 ...(effectiveConfig.defaultParams || {}), // Already interpolated when finalEnvironment was created
-                ...(executionParams.contextOverrides || {}), // Allow deep override of context
+                ...(params.contextOverrides || {}), // Allow deep override of context
             };
             try {
                 const result = await scriptExecutor.run(absoluteScriptPath, context);

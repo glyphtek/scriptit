@@ -1,7 +1,7 @@
 import type { ScriptContext } from "../common/types/index.js";
-export type ScriptExecutorOptions = {};
+export type ScriptExecutorOptions = Record<string, never>;
 export interface ScriptExecutor {
-    run: (scriptPath: string, context: ScriptContext) => Promise<any>;
+    run: (scriptPath: string, context: ScriptContext) => Promise<unknown>;
 }
 /**
  * Creates a script executor instance that can run scripts

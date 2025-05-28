@@ -31,15 +31,15 @@ export async function loadConfig(configPath) {
     if (pathExistsSync(resolvedConfigPath)) {
         logger.debug(`loadConfig: Config file found: ${resolvedConfigPath}`);
         try {
-            const importedConfig = await import(resolvedConfigPath + `?v=${Date.now()}`);
+            const importedConfig = await import(`${resolvedConfigPath}?v=${Date.now()}`);
             userConfig = importedConfig.default || importedConfig;
-            logger.debug(`loadConfig: User config loaded:`, userConfig);
+            logger.debug("loadConfig: User config loaded:", userConfig);
             // Log exclude patterns if present
             if (userConfig.excludePatterns) {
-                logger.debug(`loadConfig: Exclude patterns found:`, userConfig.excludePatterns);
+                logger.debug("loadConfig: Exclude patterns found:", userConfig.excludePatterns);
             }
             else {
-                logger.debug(`loadConfig: No exclude patterns defined in config`);
+                logger.debug("loadConfig: No exclude patterns defined in config");
             }
         }
         catch (error) {
@@ -139,7 +139,7 @@ export async function getScriptFiles(scriptsBaseDir, excludePatterns = []) {
         logger.debug(`getScriptFiles: Using exclude patterns: ${JSON.stringify(excludePatterns)}`);
     }
     const allScriptFullPaths = await findScriptFilesRecursive(scriptsBaseDir, scriptsBaseDir, "", excludePatterns);
-    logger.debug(`getScriptFiles: Found script full paths (recursive):`, allScriptFullPaths);
+    logger.debug("getScriptFiles: Found script full paths (recursive):", allScriptFullPaths);
     return allScriptFullPaths;
 }
 //# sourceMappingURL=utils.js.map

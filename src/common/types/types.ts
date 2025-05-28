@@ -10,14 +10,20 @@ export interface ScriptContext {
 
 export interface ScriptModule {
   tearUp?: (context: ScriptContext) => Promise<unknown> | unknown;
-  execute?: (context: ScriptContext, tearUpResult?: unknown) => Promise<unknown> | unknown;
+  execute?: (
+    context: ScriptContext,
+    tearUpResult?: unknown,
+  ) => Promise<unknown> | unknown;
   tearDown?: (
     context: ScriptContext,
     executeResult?: unknown,
     tearUpResult?: unknown,
   ) => Promise<void> | void;
   description?: string; // Optional description for the UI
-  default?: (context: ScriptContext, tearUpResult?: unknown) => Promise<unknown> | unknown; // Support for default export functions (e.g., lambda functions)
+  default?: (
+    context: ScriptContext,
+    tearUpResult?: unknown,
+  ) => Promise<unknown> | unknown; // Support for default export functions (e.g., lambda functions)
 }
 
 export interface RunnerConfig {

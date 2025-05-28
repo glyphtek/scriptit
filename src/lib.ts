@@ -33,20 +33,20 @@ export interface ScriptRunnerInstance {
   environment: Record<string, string | undefined>;
   executeScript: (
     scriptPath: string,
-    executionParams?: Record<string, any>,
+    executionParams?: Record<string, unknown>,
     customLogger?: (message: string) => void, // Allow custom logger for this specific execution
-  ) => Promise<any>;
+  ) => Promise<unknown>;
   runTUI: () => Promise<void>;
   listScripts: () => Promise<string[]>; // Added method to list available scripts
   on: (
     eventName: string,
-    listener: (...args: any[]) => void,
+    listener: (...args: unknown[]) => void,
   ) => ScriptRunnerInstance;
   off: (
     eventName: string,
-    listener: (...args: any[]) => void,
+    listener: (...args: unknown[]) => void,
   ) => ScriptRunnerInstance;
-  emit: (eventName: string, ...args: any[]) => boolean;
+  emit: (eventName: string, ...args: unknown[]) => boolean;
   // close?: () => Promise<void>; // If needed later
 }
 
@@ -117,9 +117,11 @@ export async function createScriptRunner(
 
     executeScript: async (
       scriptPath: string,
-      executionParams: Record<string, any> = {},
+      executionParams?: Record<string, unknown>,
       customLogger?: (message: string) => void,
     ) => {
+      const params =
+        executionParams || (Object.create(null) as Record<string, unknown>);
       const absoluteScriptPath = path.isAbsolute(scriptPath)
         ? scriptPath
         : path.resolve(effectiveConfig.scriptsDir, scriptPath);
@@ -130,12 +132,12 @@ export async function createScriptRunner(
         throw err;
       }
 
-      emitter.emit("script:beforeExecute", absoluteScriptPath, executionParams);
+      emitter.emit("script:beforeExecute", absoluteScriptPath, params);
 
       // Build context for this specific execution
       const scriptSpecificEnv = {
         ...finalEnvironment,
-        ...(executionParams.env || {}),
+        ...(params.env || {}),
       };
       const contextLog =
         customLogger ||
@@ -152,17 +154,17 @@ export async function createScriptRunner(
         tmpDir: effectiveConfig.tmpDir,
         configPath: effectiveConfig.loadedConfigPath,
         log: contextLog,
-        params: executionParams.params || {}, // User-defined params for the script
+        params: (params.params as Record<string, unknown>) || ({} as Record<string, unknown>), // User-defined params for the script
         // Spread other potential context items defined in RunnerConfig or executionParams
         ...(effectiveConfig.defaultParams || {}), // Already interpolated when finalEnvironment was created
-        ...(executionParams.contextOverrides || {}), // Allow deep override of context
+        ...(params.contextOverrides || {}), // Allow deep override of context
       };
 
       try {
         const result = await scriptExecutor.run(absoluteScriptPath, context);
         emitter.emit("script:afterExecute", absoluteScriptPath, result);
         return result;
-      } catch (error: any) {
+      } catch (error: unknown) {
         emitter.emit("script:error", absoluteScriptPath, error);
         throw error; // Re-throw for the caller to handle
       }

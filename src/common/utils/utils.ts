@@ -25,7 +25,10 @@ export function interpolateEnvVars(
   if (typeof value === "object" && value !== null) {
     const result: Record<string, unknown> = {};
     for (const key in value) {
-      result[key] = interpolateEnvVars((value as Record<string, unknown>)[key], env);
+      result[key] = interpolateEnvVars(
+        (value as Record<string, unknown>)[key],
+        env,
+      );
     }
     return result;
   }
@@ -43,19 +46,19 @@ export async function loadConfig(configPath?: string): Promise<RunnerConfig> {
     logger.debug(`loadConfig: Config file found: ${resolvedConfigPath}`);
     try {
       const importedConfig = await import(
-        resolvedConfigPath + `?v=${Date.now()}`
+        `${resolvedConfigPath}?v=${Date.now()}`
       );
       userConfig = importedConfig.default || importedConfig;
-      logger.debug(`loadConfig: User config loaded:`, userConfig);
+      logger.debug("loadConfig: User config loaded:", userConfig);
 
       // Log exclude patterns if present
       if (userConfig.excludePatterns) {
         logger.debug(
-          `loadConfig: Exclude patterns found:`,
+          "loadConfig: Exclude patterns found:",
           userConfig.excludePatterns,
         );
       } else {
-        logger.debug(`loadConfig: No exclude patterns defined in config`);
+        logger.debug("loadConfig: No exclude patterns defined in config");
       }
     } catch (error) {
       logger.warn(
@@ -99,7 +102,7 @@ export async function loadConfig(configPath?: string): Promise<RunnerConfig> {
 export function loadEnvironmentVariables(
   envFiles: string[],
 ): Record<string, string | undefined> {
-  const loadedEnv: Record<string, any> = {};
+  const loadedEnv: Record<string, string | undefined> = {};
 
   // Load from specified .env files
   for (const file of envFiles) {
@@ -216,7 +219,7 @@ export async function getScriptFiles(
   );
 
   logger.debug(
-    `getScriptFiles: Found script full paths (recursive):`,
+    "getScriptFiles: Found script full paths (recursive):",
     allScriptFullPaths,
   );
 

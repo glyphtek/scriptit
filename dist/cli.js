@@ -69,7 +69,7 @@ export default {
     }
     if (!pathExistsSync(path.resolve(".env"))) {
         await fs.copyFile(exampleEnvPath, path.resolve(".env"));
-        console.log(chalk.green(`Copied .env.example to .env`));
+        console.log(chalk.green("Copied .env.example to .env"));
     }
     // Create example script
     const exampleScriptPath = path.join(scriptsDir, "example.ts");
@@ -234,7 +234,8 @@ async function executeScriptFile(scriptPath, config, cliProvidedEnv = {}) {
             console.log(chalk.gray(`Created temporary directory: ${config.tmpDir}`));
         }
         catch (e) {
-            console.error(chalk.red(`Error creating temporary directory ${config.tmpDir}: ${e.message}`));
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            console.error(chalk.red(`Error creating temporary directory ${config.tmpDir}: ${errorMessage}`));
             process.exit(1);
         }
     }
@@ -245,7 +246,10 @@ async function executeScriptFile(scriptPath, config, cliProvidedEnv = {}) {
     // CLI-provided env vars take precedence over config default params, which take precedence over .env files
     const fullEnv = {
         ...baseEnv,
-        ...(typeof interpolatedDefaultParams === 'object' && interpolatedDefaultParams !== null ? interpolatedDefaultParams : {}),
+        ...(typeof interpolatedDefaultParams === "object" &&
+            interpolatedDefaultParams !== null
+            ? interpolatedDefaultParams
+            : {}),
         ...cliProvidedEnv,
     };
     logger.cliOutput(chalk.cyan(`--- Running script: ${path.basename(absoluteScriptPath)} ---`)); // Use chalk directly for user-facing output styling
@@ -295,8 +299,9 @@ async function executeScriptFile(scriptPath, config, cliProvidedEnv = {}) {
         process.exit(0); // Explicit success exit
     }
     catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(chalk.red(`--- Error running script ${path.basename(absoluteScriptPath)} ---`));
-        console.error(chalk.red(error.stack || error.message));
+        console.error(chalk.red(errorMessage));
         console.error(chalk.red(`--- Script ${path.basename(absoluteScriptPath)} failed ---\n`));
         process.exit(1); // Explicit failure exit
     }
@@ -357,7 +362,13 @@ program
     const interpolatedDefaultParams = config.defaultParams
         ? interpolateEnvVars(config.defaultParams, baseEnv)
         : {};
-    const fullEnv = { ...baseEnv, ...(typeof interpolatedDefaultParams === 'object' && interpolatedDefaultParams !== null ? interpolatedDefaultParams : {}) };
+    const fullEnv = {
+        ...baseEnv,
+        ...(typeof interpolatedDefaultParams === "object" &&
+            interpolatedDefaultParams !== null
+            ? interpolatedDefaultParams
+            : {}),
+    };
     // Populate configDisplayValues for the TUI
     const configDisplayValues = {
         scriptsDir: path.relative(process.cwd(), config.scriptsDir),
@@ -422,15 +433,17 @@ program
                         }
                     }
                     catch (err) {
-                        console.log(chalk.yellow(`   Error loading script: ${err.message}`));
+                        const errorMessage = err instanceof Error ? err.message : String(err);
+                        console.log(chalk.yellow(`   Error loading script: ${errorMessage}`));
                     }
                 }
                 console.log(chalk.blue("\nTo run a script, use:"));
-                console.log(`scriptit exec <script-path>`);
+                console.log("scriptit exec <script-path>");
             }
         }
         catch (err) {
-            console.error(chalk.red(`Error listing scripts: ${err.message}`));
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            console.error(chalk.red(`Error listing scripts: ${errorMessage}`));
         }
         return;
     }
@@ -439,8 +452,9 @@ program
         config.scriptsDir, config.tmpDir, fullEnv, configDisplayValues);
     }
     catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
         console.error(chalk.red("Error initializing TUI:"));
-        console.error(chalk.red(err.stack || err.message));
+        console.error(chalk.red(errorMessage));
         console.log(chalk.yellow("\nTry running with --no-tui or --debug option to see available scripts."));
     }
 });

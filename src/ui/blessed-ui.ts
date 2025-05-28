@@ -15,7 +15,7 @@ export async function runTUI(
   initialScriptsDir: string,
   initialTmpDir: string,
   initialEnv: Record<string, string | undefined>,
-  initialConfigValues: Record<string, any>,
+  initialConfigValues: Record<string, unknown>,
   emitter?: EventEmitter, // Optional emitter from lib
 ) {
   try {
@@ -114,11 +114,9 @@ export async function runTUI(
       content += `{yellow-fg}Temp Dir:{/} ${path.relative(process.cwd(), initialTmpDir)}\n`;
       content += `{yellow-fg}Env Vars:{/} ${Object.keys(initialEnv).length} loaded\n`;
 
-      if (
-        initialConfigValues.excludePatterns &&
-        initialConfigValues.excludePatterns.length > 0
-      ) {
-        content += `{yellow-fg}Exclude:{/} ${initialConfigValues.excludePatterns.join(", ")}\n`;
+      const excludePatterns = initialConfigValues.excludePatterns as string[] | undefined;
+      if (excludePatterns && Array.isArray(excludePatterns) && excludePatterns.length > 0) {
+        content += `{yellow-fg}Exclude:{/} ${excludePatterns.join(", ")}\n`;
       }
 
       configBox.setContent(content);
@@ -128,7 +126,7 @@ export async function runTUI(
       outputLog.log("Populating script list...");
 
       try {
-        const excludePatterns = initialConfigValues.excludePatterns || [];
+        const excludePatterns = (initialConfigValues.excludePatterns as string[]) || [];
         const scriptPaths = await getScriptFiles(
           initialScriptsDir,
           excludePatterns,
@@ -157,7 +155,9 @@ export async function runTUI(
 
         screen.render();
       } catch (error: unknown) {
-        outputLog.log(`Error loading scripts: ${error instanceof Error ? error.message : String(error)}`);
+        outputLog.log(
+          `Error loading scripts: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
 
@@ -200,7 +200,8 @@ export async function runTUI(
     }
 
     async function executeSelectedScript() {
-      const selectedIndex = (fileList as unknown as { selected: number }).selected;
+      const selectedIndex = (fileList as unknown as { selected: number })
+        .selected;
       if (selectedIndex < 0 || selectedIndex >= currentScriptPaths.length) {
         outputLog.log("No script selected");
         return;
@@ -269,7 +270,9 @@ export async function runTUI(
           `{green-fg}=== ${relativePath} completed successfully ==={/}\n`,
         );
       } catch (error: unknown) {
-        outputLog.log(`{red-fg}Error: ${error instanceof Error ? error.message : String(error)}{/}\n`);
+        outputLog.log(
+          `{red-fg}Error: ${error instanceof Error ? error.message : String(error)}{/}\n`,
+        );
       }
 
       screen.render();
@@ -343,8 +346,9 @@ export async function runTUI(
     );
 
     screen.render();
-  } catch (error: any) {
-    console.error("Error initializing TUI:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error initializing TUI:", errorMessage);
     process.exit(1);
   }
 }

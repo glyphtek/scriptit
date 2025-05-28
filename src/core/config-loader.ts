@@ -43,20 +43,20 @@ export async function loadRunnerConfigInternal(
     );
     try {
       const importedConfig = await import(
-        resolvedConfigPath + `?v=${Date.now()}`
+        `${resolvedConfigPath}?v=${Date.now()}`
       );
       userConfig = importedConfig.default || importedConfig;
-      logger.debug(`loadRunnerConfigInternal: User config loaded:`, userConfig);
+      logger.debug("loadRunnerConfigInternal: User config loaded:", userConfig);
 
       // Log exclude patterns if present
       if (userConfig.excludePatterns) {
         logger.debug(
-          `loadRunnerConfigInternal: Exclude patterns found:`,
+          "loadRunnerConfigInternal: Exclude patterns found:",
           userConfig.excludePatterns,
         );
       } else {
         logger.debug(
-          `loadRunnerConfigInternal: No exclude patterns defined in config`,
+          "loadRunnerConfigInternal: No exclude patterns defined in config",
         );
       }
     } catch (error) {
@@ -106,7 +106,7 @@ export async function loadRunnerConfigInternal(
     : undefined;
 
   logger.debug(
-    `loadRunnerConfigInternal: Final effective config:`,
+    "loadRunnerConfigInternal: Final effective config:",
     mergedConfig,
   );
 
