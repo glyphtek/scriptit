@@ -118,8 +118,8 @@ out
 # Nuxt.js build / generate output
 
 .nuxt
-# Keep dist for npm publishing
-# dist
+# Exclude dist from Git - it will be built during npm publish
+dist
 
 # Gatsby files
 
