@@ -156,8 +156,8 @@ export async function runTUI(
         }
 
         screen.render();
-      } catch (error: any) {
-        outputLog.log(`Error loading scripts: ${error.message}`);
+      } catch (error: unknown) {
+        outputLog.log(`Error loading scripts: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
 
@@ -200,7 +200,7 @@ export async function runTUI(
     }
 
     async function executeSelectedScript() {
-      const selectedIndex = (fileList as any).selected;
+      const selectedIndex = (fileList as unknown as { selected: number }).selected;
       if (selectedIndex < 0 || selectedIndex >= currentScriptPaths.length) {
         outputLog.log("No script selected");
         return;
@@ -221,8 +221,8 @@ export async function runTUI(
         // Priority: default > execute (to support lambda functions and other scenarios)
         let executeFunction: (
           context: ScriptContext,
-          tearUpResult?: any,
-        ) => Promise<any> | any;
+          tearUpResult?: unknown,
+        ) => Promise<unknown> | unknown;
         let functionName: string;
 
         if (typeof scriptModule.default === "function") {
@@ -241,6 +241,7 @@ export async function runTUI(
           env: initialEnv,
           tmpDir: initialTmpDir,
           configPath: configPath,
+          params: {},
           log: (message: string) => {
             outputLog.log(`  ${message}`);
             screen.render();
@@ -248,7 +249,7 @@ export async function runTUI(
         };
 
         // Execute tearUp if it exists
-        let tearUpResult: any;
+        let tearUpResult: unknown;
         if (typeof scriptModule.tearUp === "function") {
           outputLog.log("Running tearUp()...");
           tearUpResult = await scriptModule.tearUp(context);
@@ -267,8 +268,8 @@ export async function runTUI(
         outputLog.log(
           `{green-fg}=== ${relativePath} completed successfully ==={/}\n`,
         );
-      } catch (error: any) {
-        outputLog.log(`{red-fg}Error: ${error.message}{/}\n`);
+      } catch (error: unknown) {
+        outputLog.log(`{red-fg}Error: ${error instanceof Error ? error.message : String(error)}{/}\n`);
       }
 
       screen.render();

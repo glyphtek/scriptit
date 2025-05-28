@@ -5,12 +5,12 @@ import { runTUI } from "./blessed-ui.js";
 /**
  * Unified interface for running the TUI
  */
-export function runBlessedTUI(
+export async function runBlessedTUI(
   configPath: string | undefined,
   scriptsDir: string,
   tmpDir: string,
   environment: Record<string, string | undefined>,
-  configDisplayValues: Record<string, any>,
+  configDisplayValues: Record<string, unknown>,
   emitter?: EventEmitter,
 ): Promise<void> {
   return runTUI(

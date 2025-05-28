@@ -7,5 +7,5 @@
  * @param defaultParams Default parameters that may contain env var references to interpolate
  * @returns Combined environment with all variables
  */
-export declare function loadEnvironment(envFilePaths: string[], initialEnv?: Record<string, string | undefined>, defaultParams?: Record<string, any>): Record<string, string | undefined>;
+export declare function loadEnvironment(envFilePaths: string[], initialEnv?: Record<string, string | undefined>, defaultParams?: Record<string, unknown>): Record<string, string | undefined>;
 //# sourceMappingURL=env-loader.d.ts.map

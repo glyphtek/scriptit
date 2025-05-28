@@ -15,46 +15,50 @@ export function updateDebugMode() {
 // though for CLI startup, it's usually set once.
 // For long-running TUI, it might be useful if env could be reloaded.
 
+/**
+ * Simple logger utility for the script runner
+ * Provides different log levels and debug mode support
+ */
 export const logger = {
-  debug: (...args: any[]): void => {
+  debug: (...args: unknown[]): void => {
     if (isDebugMode) {
       const message = args
         .map((arg) =>
-          typeof arg === "object" ? JSON.stringify(arg, null, 2) : arg,
+          typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg),
         )
         .join(" ");
       console.log(chalk.gray(`[DEBUG] ${message}`));
     }
   },
-  info: (...args: any[]): void => {
+  info: (...args: unknown[]): void => {
     const message = args
       .map((arg) =>
-        typeof arg === "object" ? JSON.stringify(arg, null, 2) : arg,
+        typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg),
       )
       .join(" ");
     console.log(chalk.blueBright(message)); // Or just console.log without specific color
   },
-  warn: (...args: any[]): void => {
+  warn: (...args: unknown[]): void => {
     const message = args
       .map((arg) =>
-        typeof arg === "object" ? JSON.stringify(arg, null, 2) : arg,
+        typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg),
       )
       .join(" ");
     console.warn(chalk.yellowBright(`[WARN] ${message}`));
   },
-  error: (...args: any[]): void => {
+  error: (...args: unknown[]): void => {
     const message = args
       .map((arg) =>
-        typeof arg === "object" ? JSON.stringify(arg, null, 2) : arg,
+        typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg),
       )
       .join(" ");
     console.error(chalk.redBright(`[ERROR] ${message}`));
   },
   // For specific CLI output not necessarily debug/info/warn/error
-  cliOutput: (...args: any[]): void => {
+  cliOutput: (...args: unknown[]): void => {
     const message = args
       .map((arg) =>
-        typeof arg === "object" ? JSON.stringify(arg, null, 2) : arg,
+        typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg),
       )
       .join(" ");
     console.log(message);

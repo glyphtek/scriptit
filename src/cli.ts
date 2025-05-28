@@ -338,7 +338,7 @@ async function executeScriptFile(
   // CLI-provided env vars take precedence over config default params, which take precedence over .env files
   const fullEnv = {
     ...baseEnv,
-    ...interpolatedDefaultParams,
+    ...(typeof interpolatedDefaultParams === 'object' && interpolatedDefaultParams !== null ? interpolatedDefaultParams : {}),
     ...cliProvidedEnv,
   };
 
@@ -382,6 +382,7 @@ async function executeScriptFile(
       env: fullEnv,
       tmpDir: config.tmpDir,
       configPath: config.loadedConfigPath, // Add loadedConfigPath to RunnerConfig if needed
+      params: {}, // Add missing params property
       log: (msg: string) =>
         console.log(chalk.blueBright(`  [SCRIPT OUTPUT] ${msg}`)), // Log to console
       // Pass other default params from config if needed, they are already in fullEnv
@@ -502,7 +503,7 @@ program
     const interpolatedDefaultParams = config.defaultParams
       ? interpolateEnvVars(config.defaultParams, baseEnv)
       : {};
-    const fullEnv = { ...baseEnv, ...interpolatedDefaultParams };
+    const fullEnv = { ...baseEnv, ...(typeof interpolatedDefaultParams === 'object' && interpolatedDefaultParams !== null ? interpolatedDefaultParams : {}) };
 
     // Populate configDisplayValues for the TUI
     const configDisplayValues = {

@@ -13,9 +13,9 @@ export const DEFAULT_TMP_DIR = "tmp";
 export const DEFAULT_CONFIG_FILE = "runner.config.js"; // or .ts if you transpile
 
 export function interpolateEnvVars(
-  value: any,
+  value: unknown,
   env: Record<string, string | undefined>,
-): any {
+): unknown {
   if (typeof value === "string") {
     return value.replace(/\$\{([^}]+)\}/g, (_, varName) => env[varName] || "");
   }
@@ -23,9 +23,9 @@ export function interpolateEnvVars(
     return value.map((item) => interpolateEnvVars(item, env));
   }
   if (typeof value === "object" && value !== null) {
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
     for (const key in value) {
-      result[key] = interpolateEnvVars(value[key], env);
+      result[key] = interpolateEnvVars((value as Record<string, unknown>)[key], env);
     }
     return result;
   }

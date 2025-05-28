@@ -126,7 +126,7 @@ export async function runTUI(configPath, initialScriptsDir, initialTmpDir, initi
                 screen.render();
             }
             catch (error) {
-                outputLog.log(`Error loading scripts: ${error.message}`);
+                outputLog.log(`Error loading scripts: ${error instanceof Error ? error.message : String(error)}`);
             }
         }
         function updateLayout() {
@@ -197,6 +197,7 @@ export async function runTUI(configPath, initialScriptsDir, initialTmpDir, initi
                     env: initialEnv,
                     tmpDir: initialTmpDir,
                     configPath: configPath,
+                    params: {},
                     log: (message) => {
                         outputLog.log(`  ${message}`);
                         screen.render();
@@ -219,7 +220,7 @@ export async function runTUI(configPath, initialScriptsDir, initialTmpDir, initi
                 outputLog.log(`{green-fg}=== ${relativePath} completed successfully ==={/}\n`);
             }
             catch (error) {
-                outputLog.log(`{red-fg}Error: ${error.message}{/}\n`);
+                outputLog.log(`{red-fg}Error: ${error instanceof Error ? error.message : String(error)}{/}\n`);
             }
             screen.render();
         }

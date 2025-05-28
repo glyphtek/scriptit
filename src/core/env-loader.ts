@@ -17,13 +17,13 @@ import { interpolateEnvVars } from "../common/utils/index.js";
 export function loadEnvironment(
   envFilePaths: string[],
   initialEnv: Record<string, string | undefined> = {},
-  defaultParams: Record<string, any> = {},
+  defaultParams: Record<string, unknown> = {},
 ): Record<string, string | undefined> {
   logger.debug(
     `loadEnvironment: Loading from env files: ${envFilePaths.join(", ")}`,
   );
 
-  const loadedEnv: Record<string, any> = {};
+  const loadedEnv: Record<string, string | undefined> = {};
 
   // Load from specified .env files
   for (const filePath of envFilePaths) {
@@ -57,7 +57,7 @@ export function loadEnvironment(
   // Final environment with interpolated params
   const finalEnv = {
     ...envWithSystemAndInitial,
-    ...interpolatedParams, // Add interpolated default params
+    ...(typeof interpolatedParams === 'object' && interpolatedParams !== null ? interpolatedParams : {}), // Ensure it's an object before spreading
   };
 
   logger.debug(

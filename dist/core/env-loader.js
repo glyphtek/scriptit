@@ -43,7 +43,7 @@ export function loadEnvironment(envFilePaths, initialEnv = {}, defaultParams = {
     // Final environment with interpolated params
     const finalEnv = {
         ...envWithSystemAndInitial,
-        ...interpolatedParams, // Add interpolated default params
+        ...(typeof interpolatedParams === 'object' && interpolatedParams !== null ? interpolatedParams : {}), // Ensure it's an object before spreading
     };
     logger.debug(`loadEnvironment: Loaded ${Object.keys(finalEnv).length} total environment variables`);
     return finalEnv;
