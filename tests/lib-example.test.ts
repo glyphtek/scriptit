@@ -2,7 +2,7 @@
 // Tests for the library example functionality
 
 import { test, expect, beforeAll, afterAll } from "bun:test";
-import { createScriptRunner } from "../src/lib.js";
+import { createScriptRunner, type ScriptExecutionResult } from "../src/lib.js";
 import path from "node:path";
 import fs from "node:fs/promises";
 
@@ -153,7 +153,7 @@ test("library example - execute simple script", async () => {
     },
   });
 
-  const result = await runner.executeScript('test-example.ts', {
+  const result: ScriptExecutionResult = await runner.executeScript('test-example.ts', {
     params: {
       testParam: 'Hello from test',
     },
@@ -166,7 +166,7 @@ test("library example - execute simple script", async () => {
   expect(result.success).toBe(true);
   expect(result.message).toBe("Test completed");
   expect(result.receivedParams).toEqual({ testParam: 'Hello from test' });
-  expect(result.envVars.TEST_VAR).toBe('test-value');
+  expect((result.envVars as any).TEST_VAR).toBe('test-value');
 });
 
 test("library example - execute lifecycle script", async () => {
@@ -175,11 +175,11 @@ test("library example - execute lifecycle script", async () => {
     tmpDir: TMP_DIR,
   });
 
-  const result = await runner.executeScript('test-lifecycle.ts');
+  const result: ScriptExecutionResult = await runner.executeScript('test-lifecycle.ts');
 
   expect(result).toBeDefined();
   expect(result.success).toBe(true);
-  expect(result.tearUpId).toMatch(/^test-\d+$/);
+  expect((result.tearUpId as string)).toMatch(/^test-\d+$/);
   expect(result.dataRead).toEqual({ test: "data" });
 });
 

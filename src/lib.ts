@@ -21,6 +21,21 @@ import { runBlessedTUI } from "./ui/index.js"; // Import from ui/index.ts
 // Default paths if not specified
 const DEFAULT_CONFIG_FILE_PATH = "runner.config.js";
 
+// Type for script execution results
+export interface ScriptExecutionResult {
+  [key: string]: unknown;
+}
+
+// Event handler types
+export type ScriptEventHandler = {
+  'script:beforeExecute': (scriptPath: string, params: Record<string, unknown>) => void;
+  'script:afterExecute': (scriptPath: string, result: ScriptExecutionResult) => void;
+  'script:error': (scriptPath: string, error: unknown) => void;
+  'script:log': (scriptPath: string, message: string) => void;
+  'tui:beforeStart': () => void;
+  'tui:afterEnd': () => void;
+};
+
 export interface CreateScriptRunnerOptions
   extends Partial<Omit<RunnerConfig, "loadedConfigPath">> {
   configFile?: string; // Explicitly allow configFile to be passed
@@ -35,18 +50,21 @@ export interface ScriptRunnerInstance {
     scriptPath: string,
     executionParams?: Record<string, unknown>,
     customLogger?: (message: string) => void, // Allow custom logger for this specific execution
-  ) => Promise<unknown>;
+  ) => Promise<ScriptExecutionResult>;
   runTUI: () => Promise<void>;
   listScripts: () => Promise<string[]>; // Added method to list available scripts
-  on: (
-    eventName: string,
-    listener: (...args: unknown[]) => void,
+  on: <K extends keyof ScriptEventHandler>(
+    eventName: K,
+    listener: ScriptEventHandler[K],
   ) => ScriptRunnerInstance;
-  off: (
-    eventName: string,
-    listener: (...args: unknown[]) => void,
+  off: <K extends keyof ScriptEventHandler>(
+    eventName: K,
+    listener: ScriptEventHandler[K],
   ) => ScriptRunnerInstance;
-  emit: (eventName: string, ...args: unknown[]) => boolean;
+  emit: <K extends keyof ScriptEventHandler>(
+    eventName: K,
+    ...args: Parameters<ScriptEventHandler[K]>
+  ) => boolean;
   // close?: () => Promise<void>; // If needed later
 }
 
@@ -119,7 +137,7 @@ export async function createScriptRunner(
       scriptPath: string,
       executionParams?: Record<string, unknown>,
       customLogger?: (message: string) => void,
-    ) => {
+    ): Promise<ScriptExecutionResult> => {
       const params =
         executionParams || (Object.create(null) as Record<string, unknown>);
       const absoluteScriptPath = path.isAbsolute(scriptPath)
@@ -128,7 +146,7 @@ export async function createScriptRunner(
 
       if (!pathExistsSync(absoluteScriptPath)) {
         const err = new Error(`Script file not found: ${absoluteScriptPath}`);
-        emitter.emit("error", "executeScript", err, absoluteScriptPath);
+        emitter.emit("script:error", absoluteScriptPath, err);
         throw err;
       }
 
@@ -162,8 +180,9 @@ export async function createScriptRunner(
 
       try {
         const result = await scriptExecutor.run(absoluteScriptPath, context);
-        emitter.emit("script:afterExecute", absoluteScriptPath, result);
-        return result;
+        const typedResult = result as ScriptExecutionResult;
+        emitter.emit("script:afterExecute", absoluteScriptPath, typedResult);
+        return typedResult;
       } catch (error: unknown) {
         emitter.emit("script:error", absoluteScriptPath, error);
         throw error; // Re-throw for the caller to handle
