@@ -8,10 +8,18 @@ async function main() {
   console.log('🚀 Script Runner Library Example\n');
 
   try {
+    // Ensure directories exist
+    const fs = await import('node:fs/promises');
+    const scriptsDir = path.join(process.cwd(), 'scripts');
+    const tmpDir = path.join(process.cwd(), 'tmp');
+    
+    await fs.mkdir(scriptsDir, { recursive: true });
+    await fs.mkdir(tmpDir, { recursive: true });
+
     // Create a script runner instance
     const runner = await createScriptRunner({
-      scriptsDir: path.join(process.cwd(), 'scripts'),
-      tmpDir: path.join(process.cwd(), 'tmp'),
+      scriptsDir,
+      tmpDir,
       envFiles: ['.env'],
       excludePatterns: ['*.helper.*', '_*'],
       defaultParams: {
@@ -109,6 +117,14 @@ async function main() {
 async function createExampleScripts() {
   const fs = await import('node:fs/promises');
   
+  // Ensure scripts directory exists
+  const scriptsDir = path.join(process.cwd(), 'scripts');
+  try {
+    await fs.mkdir(scriptsDir, { recursive: true });
+  } catch (error) {
+    // Directory might already exist
+  }
+  
   // Create example.ts
   const exampleScript = `// scripts/example.ts
 // Example script for library usage
@@ -135,6 +151,8 @@ export async function execute(context: any) {
   // Create data-processor.ts
   const dataProcessorScript = `// scripts/data-processor.ts
 // Data processing script example
+
+import fs from 'node:fs/promises';
 
 export const description = "Processes data with tearUp and tearDown";
 
@@ -201,12 +219,13 @@ export async function tearDown(context: any, executeResult: any, tearUpResult: a
   context.log("🗑️  Cleanup completed");
 }`;
 
-  await fs.writeFile('examples/lib/scripts/example.ts', exampleScript);
-  await fs.writeFile('examples/lib/scripts/data-processor.ts', dataProcessorScript);
+  // Write the script files
+  await fs.writeFile(path.join(scriptsDir, 'example.ts'), exampleScript);
+  await fs.writeFile(path.join(scriptsDir, 'data-processor.ts'), dataProcessorScript);
   
   console.log('📝 Created example scripts:');
-  console.log('  - scripts/example.ts');
-  console.log('  - scripts/data-processor.ts');
+  console.log('  - example.ts');
+  console.log('  - data-processor.ts');
 }
 
 // Run the example

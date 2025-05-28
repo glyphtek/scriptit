@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2025-01-XX
+## [0.3.0] - 2025-01-28
 
 ### Added
 - **Default Function Support**: Scripts can now export `default` functions alongside `execute` functions
@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CLI Execution**: Fixed Commander.js integration and argument parsing
 - **TUI Rendering**: Fixed blessed layout and keyboard handling issues
 - **Path Display**: Cleaned up script path display in TUI
+- **Environment Variable Interpolation**: Fixed order of operations for proper variable substitution
 
 ## [0.2.0] - Previous Version
 - Initial TUI implementation

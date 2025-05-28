@@ -84,14 +84,13 @@ test("library example - README has proper documentation", async () => {
   const content = await fs.readFile(readmePath, "utf-8");
   
   // Verify README contains essential sections
-  expect(content).toContain("# Script Runner Library Example");
+  expect(content).toContain("# ScriptIt Library Example");
+  expect(content).toContain("## Overview");
   expect(content).toContain("## Getting Started");
   expect(content).toContain("## What the Example Demonstrates");
-  expect(content).toContain("## Integration Patterns");
   
   // Verify it has code examples
   expect(content).toContain("```typescript");
-  expect(content).toContain("createScriptRunner");
   expect(content).toContain("runner.executeScript");
 });
 

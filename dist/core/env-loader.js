@@ -36,14 +36,14 @@ export function loadEnvironment(envFilePaths, initialEnv = {}, defaultParams = {
         }
     }
     // System environment variables take precedence over .env files
-    const envWithSystem = { ...loadedEnv, ...process.env };
-    // Interpolate env vars in default params
-    const interpolatedParams = interpolateEnvVars(defaultParams, envWithSystem);
     // initialEnv (programmatically provided) takes highest precedence
+    const envWithSystemAndInitial = { ...loadedEnv, ...process.env, ...initialEnv };
+    // Interpolate env vars in default params using the complete environment
+    const interpolatedParams = interpolateEnvVars(defaultParams, envWithSystemAndInitial);
+    // Final environment with interpolated params
     const finalEnv = {
-        ...envWithSystem,
+        ...envWithSystemAndInitial,
         ...interpolatedParams, // Add interpolated default params
-        ...initialEnv,
     };
     logger.debug(`loadEnvironment: Loaded ${Object.keys(finalEnv).length} total environment variables`);
     return finalEnv;

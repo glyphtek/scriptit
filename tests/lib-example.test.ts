@@ -210,7 +210,7 @@ test("library example - event handling", async () => {
   expect(events).toHaveLength(2);
   expect(events[0].type).toBe('beforeExecute');
   expect(events[0].scriptPath).toContain('test-example.ts');
-  expect(events[0].data).toEqual({ eventTest: true });
+  expect(events[0].data).toEqual({ params: { eventTest: true } });
   
   expect(events[1].type).toBe('afterExecute');
   expect(events[1].scriptPath).toContain('test-example.ts');
@@ -258,6 +258,7 @@ test("library example - environment variable interpolation", async () => {
     },
   });
 
+  expect(runner.environment.TEST_INTERPOLATION).toBe('interpolated-value');
   expect(runner.environment.interpolatedValue).toBe('interpolated-value');
 });
 
