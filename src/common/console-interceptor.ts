@@ -2,6 +2,7 @@ export interface ConsoleInterceptorOptions {
   logFunction: (message: string) => void;
   includeLevel?: boolean; // Whether to include log level in the message
   preserveOriginal?: boolean; // Whether to also call the original console methods
+  useColors?: boolean; // Whether to apply colors to different log levels
 }
 
 export interface ConsoleInterceptor {
@@ -11,8 +12,7 @@ export interface ConsoleInterceptor {
 }
 
 /**
- * Creates a simple console interceptor that captures console methods
- * and redirects them to a custom log function with minimal formatting
+ * Creates a minimal console interceptor for testing
  */
 export function createConsoleInterceptor(
   options: ConsoleInterceptorOptions,
@@ -21,24 +21,38 @@ export function createConsoleInterceptor(
   
   // Store original console methods
   const originalConsole = {
-    log: console.log,
-    error: console.error,
-    warn: console.warn,
-    info: console.info,
-    debug: console.debug,
+    log: console.log.bind(console),
+    error: console.error.bind(console),
+    warn: console.warn.bind(console),
+    info: console.info.bind(console),
+    debug: console.debug.bind(console),
   };
 
   let isIntercepting = false;
 
-  const createInterceptedMethod = (level: string, originalMethod: (...args: unknown[]) => void) => {
+  const createInterceptedMethod = (level: string) => {
     return (...args: unknown[]) => {
-      // Simple string conversion - just join arguments with spaces
-      const message = args.map(arg => String(arg)).join(' ');
-      const finalMessage = includeLevel ? `[${level.toUpperCase()}] ${message}` : message;
-      logFunction(finalMessage);
-      
-      if (preserveOriginal) {
-        originalMethod.apply(console, args);
+      if (!isIntercepting) {
+        return originalConsole[level as keyof typeof originalConsole](...args);
+      }
+
+      try {
+        // Very simple string conversion
+        const message = args.map(arg => String(arg)).join(' ');
+        
+        // Add level prefix if requested
+        const finalMessage = includeLevel 
+          ? `[${level.toUpperCase()}] ${message}`
+          : message;
+        
+        logFunction(finalMessage);
+        
+        if (preserveOriginal) {
+          originalConsole[level as keyof typeof originalConsole](...args);
+        }
+      } catch (error) {
+        // Fallback - just use original console
+        originalConsole[level as keyof typeof originalConsole](...args);
       }
     };
   };
@@ -48,14 +62,19 @@ export function createConsoleInterceptor(
       return; // Already intercepting
     }
 
-    // Replace console methods with intercepted versions
-    console.log = createInterceptedMethod('log', originalConsole.log);
-    console.error = createInterceptedMethod('error', originalConsole.error);
-    console.warn = createInterceptedMethod('warn', originalConsole.warn);
-    console.info = createInterceptedMethod('info', originalConsole.info);
-    console.debug = createInterceptedMethod('debug', originalConsole.debug);
+    try {
+      // Replace console methods with intercepted versions
+      console.log = createInterceptedMethod('log');
+      console.error = createInterceptedMethod('error');
+      console.warn = createInterceptedMethod('warn');
+      console.info = createInterceptedMethod('info');
+      console.debug = createInterceptedMethod('debug');
 
-    isIntercepting = true;
+      isIntercepting = true;
+    } catch (error) {
+      // If anything goes wrong, don't intercept
+      isIntercepting = false;
+    }
   };
 
   const stop = () => {
@@ -63,14 +82,19 @@ export function createConsoleInterceptor(
       return; // Not intercepting
     }
 
-    // Restore original console methods
-    console.log = originalConsole.log;
-    console.error = originalConsole.error;
-    console.warn = originalConsole.warn;
-    console.info = originalConsole.info;
-    console.debug = originalConsole.debug;
+    try {
+      // Restore original console methods
+      console.log = originalConsole.log;
+      console.error = originalConsole.error;
+      console.warn = originalConsole.warn;
+      console.info = originalConsole.info;
+      console.debug = originalConsole.debug;
 
-    isIntercepting = false;
+      isIntercepting = false;
+    } catch (error) {
+      // If restoration fails, at least mark as not intercepting
+      isIntercepting = false;
+    }
   };
 
   const isActive = () => isIntercepting;

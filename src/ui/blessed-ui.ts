@@ -6,6 +6,7 @@ import chalk from "chalk";
 import { logger } from "../common/logger/index.js";
 import type { ScriptContext, ScriptModule } from "../common/types/index.js";
 import { getScriptFiles } from "../common/utils/index.js";
+import { createScriptExecutorInstance } from "../core/script-executor.js";
 
 /**
  * Main TUI implementation using blessed
@@ -212,63 +213,35 @@ export async function runTUI(
 
       outputLog.log(`\n{green-fg}=== Running ${relativePath} ==={/}`);
 
+      // Create script executor with console interception enabled
+      const scriptExecutor = createScriptExecutorInstance({
+        consoleInterception: {
+          enabled: true,
+          includeLevel: false, // Don't include log level prefix for cleaner TUI output
+          preserveOriginal: false, // Don't call original console methods to avoid duplication
+          useColors: true, // Enable colors for different log levels
+        },
+      });
+
+      const context: ScriptContext = {
+        env: initialEnv,
+        tmpDir: initialTmpDir,
+        configPath: configPath,
+        params: {},
+        log: (message: string) => {
+          outputLog.log(`  ${message}`);
+          screen.render();
+        },
+      };
+
       try {
-        // Import and execute the script
-        const scriptModule = (await import(
-          `file://${scriptPath}?v=${Date.now()}`
-        )) as ScriptModule;
-
-        // Determine which function to use for execution
-        // Priority: default > execute (to support lambda functions and other scenarios)
-        let executeFunction: (
-          context: ScriptContext,
-          tearUpResult?: unknown,
-        ) => Promise<unknown> | unknown;
-        let functionName: string;
-
-        if (typeof scriptModule.default === "function") {
-          executeFunction = scriptModule.default;
-          functionName = "default";
-        } else if (typeof scriptModule.execute === "function") {
-          executeFunction = scriptModule.execute;
-          functionName = "execute";
-        } else {
-          throw new Error(
-            "Script must export either an 'execute' function or a 'default' function",
-          );
-        }
-
-        const context: ScriptContext = {
-          env: initialEnv,
-          tmpDir: initialTmpDir,
-          configPath: configPath,
-          params: {},
-          log: (message: string) => {
-            outputLog.log(`  ${message}`);
-            screen.render();
-          },
-        };
-
-        // Execute tearUp if it exists
-        let tearUpResult: unknown;
-        if (typeof scriptModule.tearUp === "function") {
-          outputLog.log("Running tearUp()...");
-          tearUpResult = await scriptModule.tearUp(context);
-        }
-
-        // Execute main function (either default or execute)
-        outputLog.log(`Running ${functionName}()...`);
-        const executeResult = await executeFunction(context, tearUpResult);
-
-        // Execute tearDown if it exists
-        if (typeof scriptModule.tearDown === "function") {
-          outputLog.log("Running tearDown()...");
-          await scriptModule.tearDown(context, executeResult, tearUpResult);
-        }
-
+        const result = await scriptExecutor.run(scriptPath, context);
         outputLog.log(
           `{green-fg}=== ${relativePath} completed successfully ==={/}\n`,
         );
+        if (result !== undefined) {
+          outputLog.log(`  Result: ${typeof result === "object" ? JSON.stringify(result) : result}`);
+        }
       } catch (error: unknown) {
         outputLog.log(
           `{red-fg}Error: ${error instanceof Error ? error.message : String(error)}{/}\n`,

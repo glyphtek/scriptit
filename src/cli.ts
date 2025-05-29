@@ -21,6 +21,7 @@ import {
   loadConfig,
   loadEnvironmentVariables,
 } from "./common/utils/index.js";
+import { createScriptExecutorInstance } from "./core/script-executor.js";
 import { runBlessedTUI as runTUI } from "./ui/index.js";
 
 // Continue with CLI implementation
@@ -31,7 +32,7 @@ program
   .description(
     "ScriptIt - A powerful CLI and library for running scripts with environment management, TUI, and support for lambda functions",
   )
-  .version("0.3.0");
+  .version("0.5.0");
 
 program
   .command("init")
@@ -362,70 +363,39 @@ async function executeScriptFile(
     chalk.gray(`  Env files considered: ${config.envFiles.join(", ")}`),
   );
 
+  // Create script executor with console interception enabled
+  const scriptExecutor = createScriptExecutorInstance({
+    consoleInterception: {
+      enabled: true, // Enable colored console interception
+      includeLevel: false, // Don't include log level prefix for cleaner output
+      preserveOriginal: false, // Don't call original console methods to avoid duplication
+      useColors: true, // Enable colors for different log levels
+    },
+  });
+
+  const context: ScriptContext = {
+    env: fullEnv,
+    tmpDir: config.tmpDir,
+    configPath: config.loadedConfigPath,
+    params: {},
+    log: (msg: string) =>
+      console.log(chalk.blueBright(`  [SCRIPT OUTPUT] ${msg}`)),
+  };
+
   try {
-    const scriptModule = (await import(
-      `file://${absoluteScriptPath}?v=${Date.now()}`
-    )) as ScriptModule;
-
-    // Determine which function to use for execution
-    // Priority: default > execute (to support lambda functions and other scenarios)
-    let executeFunction: (
-      context: ScriptContext,
-      tearUpResult?: unknown,
-    ) => Promise<unknown> | unknown;
-    let functionName: string;
-
-    if (typeof scriptModule.default === "function") {
-      executeFunction = scriptModule.default;
-      functionName = "default";
-    } else if (typeof scriptModule.execute === "function") {
-      executeFunction = scriptModule.execute;
-      functionName = "execute";
-    } else {
-      throw new Error(
-        `Script ${absoluteScriptPath} must export either an 'execute' function or a 'default' function.`,
-      );
-    }
-
-    const context: ScriptContext = {
-      env: fullEnv,
-      tmpDir: config.tmpDir,
-      configPath: config.loadedConfigPath, // Add loadedConfigPath to RunnerConfig if needed
-      params: {}, // Add missing params property
-      log: (msg: string) =>
-        console.log(chalk.blueBright(`  [SCRIPT OUTPUT] ${msg}`)), // Log to console
-      // Pass other default params from config if needed, they are already in fullEnv
-      // ...config.defaultParams // already interpolated into fullEnv
-    };
-
-    let tearUpResult: unknown;
-    if (typeof scriptModule.tearUp === "function") {
-      console.log(chalk.blue("  -> tearUp()"));
-      tearUpResult = await scriptModule.tearUp(context);
-      console.log(
-        chalk.gray(
-          `     tearUp result: ${typeof tearUpResult === "object" ? JSON.stringify(tearUpResult) : tearUpResult}`,
-        ),
-      );
-    }
-
-    console.log(chalk.blue(`  -> ${functionName}()`));
-    const executeResult = await executeFunction(context, tearUpResult);
-    console.log(
-      chalk.gray(
-        `     ${functionName} result: ${typeof executeResult === "object" ? JSON.stringify(executeResult) : executeResult}`,
-      ),
-    );
-
-    if (typeof scriptModule.tearDown === "function") {
-      console.log(chalk.blue("  -> tearDown()"));
-      await scriptModule.tearDown(context, executeResult, tearUpResult);
-    }
+    const result = await scriptExecutor.run(absoluteScriptPath, context);
     console.log(
       chalk.green(
         `--- Script ${path.basename(absoluteScriptPath)} finished successfully ---\n`,
       ),
     );
+    if (result !== undefined) {
+      console.log(
+        chalk.gray(
+          `     Script result: ${typeof result === "object" ? JSON.stringify(result) : result}`,
+        ),
+      );
+    }
     process.exit(0); // Explicit success exit
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);

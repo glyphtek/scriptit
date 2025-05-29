@@ -41,6 +41,12 @@ export interface CreateScriptRunnerOptions
   configFile?: string; // Explicitly allow configFile to be passed
   initialEnv?: Record<string, string | undefined>; // Programmatically set/override env vars
   workingDirectory?: string; // Set working directory for script execution
+  consoleInterception?: {
+    enabled?: boolean;
+    includeLevel?: boolean;
+    preserveOriginal?: boolean;
+    useColors?: boolean;
+  };
 }
 
 export interface ScriptRunnerInstance {
@@ -112,8 +118,12 @@ export async function createScriptRunner(
   // The executor is stateless regarding which script to run, it just knows how to run one
   // given a path and a context.
   const scriptExecutor = createScriptExecutorInstance({
-    // Potentially pass global things the executor might need,
-    // but mostly context is built per-execution.
+    consoleInterception: {
+      enabled: options.consoleInterception?.enabled ?? true, // Enable by default
+      includeLevel: options.consoleInterception?.includeLevel ?? false,
+      preserveOriginal: options.consoleInterception?.preserveOriginal ?? false,
+      useColors: options.consoleInterception?.useColors ?? true,
+    },
   });
 
   const instance: ScriptRunnerInstance = {

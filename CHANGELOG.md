@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-01-29
+
+### Added
+- **Colored Console Interception**: Added support for colored console output during script execution
+  - 🤍 White for `console.log` messages
+  - 🔴 Red for `console.error` messages  
+  - 🟡 Yellow for `console.warn` messages
+  - 🔵 Blue for `console.info` messages
+  - ⚫ Gray for `console.debug` messages
+- **Safe Console Context**: Scripts can access colored console via `context.console` for memory-safe operation
+- **Configurable Console Options**: Support for enabling/disabling colors, level prefixes, and original console preservation
+- **Cross-Runtime Console Support**: Colored console works across Bun, Node.js, and Deno runtimes
+
+### Changed
+- **Enhanced Script Context**: Added optional `console` property to script context for colored output
+- **Improved Object Serialization**: Safe string conversion that prevents circular reference memory leaks
+- **Better Error Handling**: Enhanced console interception with graceful fallbacks
+
+### Fixed
+- **Memory Leak Prevention**: Resolved circular reference issues in console object serialization
+- **Console Restoration**: Proper cleanup of console interception after script execution
+
 ## [0.4.2] - 2025-01-28
 
 ### Fixed
