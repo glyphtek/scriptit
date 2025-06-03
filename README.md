@@ -6,7 +6,7 @@
 
 A powerful **cross-runtime** script runner with TUI, environment management, and colored console output. Works seamlessly with Node.js, Bun, and Deno.
 
-**🎨 NEW in v0.5.1:** Enhanced documentation and improved build performance with rolldown-vite!
+**🎨 NEW in v0.5.1:** Enhanced documentation and improved GitHub Pages deployment!
 
 ## 🚀 Quick Start
 

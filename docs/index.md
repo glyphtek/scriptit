@@ -97,7 +97,7 @@ await runner.executeScript('my-script.js')
 ## What's New in v0.5.1
 
 - 📚 **Enhanced Documentation**: Comprehensive README improvements with better organization and accuracy
-- 🚀 **Improved Build Performance**: Migrated to rolldown-vite for faster documentation builds
+- 🚀 **GitHub Pages Deployment**: Automated documentation deployment with GitHub Actions
 - 🔧 **Type Safety**: Better TypeScript types with `unknown[]` instead of `any[]`
 - ✅ **Better CLI Documentation**: Corrected and expanded CLI command documentation
 

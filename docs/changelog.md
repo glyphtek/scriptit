@@ -24,14 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Grouped features into logical categories (Developer Experience, Runtime & Performance, etc.)
   - Consolidated redundant sections and improved scannability
   - Added comprehensive troubleshooting section with common issues and solutions
-- **Build Performance**: Migrated to rolldown-vite for faster documentation builds
-  - Configured Bun package overrides for seamless rolldown-vite integration
-  - Improved VitePress build performance with Rust-powered bundling
+- **GitHub Actions**: Added automated documentation deployment workflow for GitHub Pages
 - **CLI Help**: Enhanced command documentation with complete option lists and examples
 
 ### Technical
-- **Package Configuration**: Added rolldown-vite override in package.json for improved build performance
-  - **VitePress Compatibility**: Excluded VitePress from rolldown-vite override to prevent build issues
+- **GitHub Pages Deployment**: Added automated documentation deployment with GitHub Actions
 - **Version Consistency**: Updated CLI version string to match package version
 - **Documentation Accuracy**: All README examples now work exactly as shown without modification
 

@@ -72,10 +72,6 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
-  "overrides": {
-    "vite": "npm:rolldown-vite@latest",
-    "vitepress > vite": "vite@latest"
-  },
   "dependencies": {
     "blessed": "^0.1.81",
     "chalk": "^5.3.0",
