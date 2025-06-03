@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Technical
 - **Package Configuration**: Added rolldown-vite override in package.json for improved build performance
+  - **VitePress Compatibility**: Excluded VitePress from rolldown-vite override to prevent build issues
 - **Version Consistency**: Updated CLI version string to match package version
 - **Documentation Accuracy**: All README examples now work exactly as shown without modification
 
