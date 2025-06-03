@@ -4,6 +4,9 @@ export default defineConfig({
   title: 'ScriptIt',
   description: 'A cross-runtime CLI and library for running scripts with environment management, TUI, and colored console output',
   
+  // GitHub Pages base URL (update if your repo name is different)
+  base: '/scriptit/',
+  
   // Ignore dead links during development
   ignoreDeadLinks: true,
   
