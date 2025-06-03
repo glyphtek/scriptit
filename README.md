@@ -4,114 +4,135 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub](https://img.shields.io/github/stars/glyphtek/scriptit?style=social)](https://github.com/glyphtek/scriptit)
 
-A powerful **cross-runtime** CLI and library built to create a configurable scripts runner. It supports environment variables, configuration files, dynamic script loading, a TUI for script selection, and a programmatic API for integration into other projects. **Now with enhanced support for lambda functions and default exports!**
+A powerful **cross-runtime** script runner with TUI, environment management, and colored console output. Works seamlessly with Node.js, Bun, and Deno.
 
-## Features
+**🎨 NEW in v0.5.1:** Enhanced documentation and improved build performance with rolldown-vite!
 
-*   **Cross-Runtime Compatibility:** Works seamlessly with Node.js (18+), Deno, and Bun
-*   **CLI & Library:** Use it as a standalone command-line tool or integrate its core logic into your projects
-*   **Interactive TUI:** A terminal-based UI with multiple panels to easily select and run scripts, view configuration, and see real-time output.
-*   **Flexible Script Support:** 
-    *   Traditional `execute` function pattern for structured scripts
-    *   **NEW:** Default export support for lambda functions and existing code
-    *   Automatic detection and execution of the appropriate function type
-*   **Configuration Files:** Define runner behavior using a `runner.config.js` (or `.ts`) file.
-    *   Specify script directories, temporary folders, and environment files.
-    *   Define default parameters for scripts.
-    *   **NEW:** Exclude patterns to filter out helper files and internal scripts
-*   **Environment Variable Management:**
-    *   Load `.env` files (e.g., `.env`, `.env.local`).
-    *   Interpolate environment variables within configuration values (`${MY_VAR}`).
-    *   Pass environment variables directly via CLI for single executions.
-*   **Dynamic Script Loading:** Scripts are loaded fresh on each execution, allowing external updates without restarting the runner.
-*   **Nested Script Discovery:** Automatically finds scripts in subdirectories.
-*   **Script Execution Pipeline:** Scripts can define `tearUp()`, `execute()`, and `tearDown()` functions, executed in sequence.
-    *   Passes a `context` object with environment variables, paths, and a logger to each pipeline function.
-*   **Temporary Directory:** Provides a managed temporary directory for scripts.
-*   **Git Integration:** `init` command can add the temporary folder to `.gitignore`.
-*   **Lambda-Ready:** Perfect for existing lambda functions - just point ScriptIt at your functions directory!
-*   **Extensible:** Designed to be adaptable to various scripting needs.
+## 🚀 Quick Start
+
+```bash
+# Install globally
+bun add -g @glyphtek/scriptit
+
+# Initialize a new project
+scriptit init
+
+# Run the interactive TUI
+scriptit run
+
+# Or execute a single script (colored console enabled by default)
+scriptit exec ./scripts/my-script.js
+```
+
+## 📚 Documentation
+
+**[📖 Visit the full documentation site →](https://scriptit.github.io/)**
+
+- 🚀 [Getting Started Guide](https://scriptit.github.io/getting-started)
+- 🎨 [Colored Console Output](https://scriptit.github.io/features/console-colors)
+- 🖥️ [CLI Commands](https://scriptit.github.io/cli/commands)
+- 📦 [Library API](https://scriptit.github.io/library/api)
+- 💡 [Examples](https://scriptit.github.io/examples/)
+
+## ✨ Key Features
+
+### 🎨 **Developer Experience**
+- **Colored Console Output:** Automatic color coding for console methods with beautiful output
+  - 🤍 White for `console.log()` • 🔴 Red for `console.error()`
+  - 🟡 Yellow for `console.warn()` • 🔵 Blue for `console.info()` • ⚫ Gray for `console.debug()`
+- **Interactive Terminal UI:** Multi-panel interface for script selection and real-time output
+- **Enhanced Script Context:** Rich context object with colored console support
+
+### ⚡ **Runtime & Performance**
+- **Cross-Runtime Compatibility:** Node.js (18+), Deno, and Bun support
+- **Dynamic Script Loading:** Fresh loading on each execution for external updates
+- **Lambda Function Support:** Perfect for existing functions - just point and run!
+- **Flexible Script Patterns:** Traditional lifecycle or modern default export functions
+
+### 🔧 **Configuration & Environment**
+- **Configuration Files:** `runner.config.js` for project-specific behavior
+- **Environment Management:** Smart `.env` file loading with variable interpolation
+- **Script Discovery:** Automatic nested discovery with customizable exclude patterns
+- **Working Directory Support:** Run from anywhere with `--pwd` option
+
+### 📦 **Integration Ready**
+- **CLI & Library:** Use standalone or integrate into your applications
+- **Event System:** Listen to script execution events
+- **Git Integration:** Smart `.gitignore` management for temporary files
 
 ## Table of Contents
 
 *   [Prerequisites](#prerequisites)
 *   [Installation](#installation)
 *   [CLI Usage](#cli-usage)
-    *   [Initialize Project (`init`)](#initialize-project-init)
-    *   [Run with TUI (`run` or default)](#run-with-tui-run-or-default)
-    *   [Execute Single Script (`exec`)](#execute-single-script-exec)
+*   [Script Types & Examples](#script-types--examples)
 *   [Library Usage](#library-usage)
-*   [Configuration (`runner.config.js`)](#configuration-runnerconfigjs)
-*   [Creating Scripts](#creating-scripts)
-    *   [Script Structure](#script-structure)
-    *   [The `context` Object](#the-context-object)
+*   [Configuration](#configuration)
+*   [Migration Guide](#migration-guide)
+*   [Troubleshooting](#troubleshooting)
 *   [Development](#development)
-*   [Contributing](#contributing)
-*   [License](#license)
+*   [Community & Support](#community--support)
 
 ## Prerequisites
 
 Choose one of the following JavaScript runtimes:
 
-*   **[Node.js](https://nodejs.org/)** (v18.0.0 or higher)
-*   **[Deno](https://deno.land/)** (latest version)
-*   **[Bun](https://bun.sh/)** (v1.0.0 or higher)
+*   **[Bun](https://bun.sh/)** (v1.0.0+) - **Recommended for best performance**
+*   **[Node.js](https://nodejs.org/)** (v18.0.0+)
+*   **[Deno](https://deno.land/)** (latest)
 
 ## Installation
 
 ### Global Installation
 
-**Node.js:**
+<details>
+<summary><strong>Bun (Recommended)</strong></summary>
+
+```bash
+bun add -g @glyphtek/scriptit
+```
+</details>
+
+<details>
+<summary><strong>Node.js</strong></summary>
+
 ```bash
 npm install -g @glyphtek/scriptit
 # or
 yarn global add @glyphtek/scriptit
 ```
+</details>
 
-**Bun:**
-```bash
-bun install -g @glyphtek/scriptit
-```
+<details>
+<summary><strong>Deno</strong></summary>
 
-**Deno:**
 ```bash
 deno install --allow-read --allow-write --allow-run --allow-env -n scriptit npm:@glyphtek/scriptit
 ```
+</details>
 
-### Local Installation (for project-specific usage)
+### Local Installation
 
-**Node.js:**
-```bash
-npm install @glyphtek/scriptit
-# or
-yarn add @glyphtek/scriptit
-```
-
-**Bun:**
-```bash
-bun add @glyphtek/scriptit
-```
-
-**Deno:**
-```typescript
-import { createScriptRunner } from "npm:@glyphtek/scriptit";
-```
+**Bun:** `bun add @glyphtek/scriptit`  
+**Node.js:** `npm install @glyphtek/scriptit`  
+**Deno:** `import { createScriptRunner } from "npm:@glyphtek/scriptit"`
 
 ## CLI Usage
 
-### Initialize Project (`init`)
+### Initialize Project
 
 ```bash
 scriptit init
 ```
 
-This creates:
-- A `scripts/` directory with example scripts
-- A `tmp/` directory for temporary files
-- A `runner.config.js` configuration file
-- Updates `.gitignore` to exclude the tmp directory
+Creates a complete project structure with example scripts, configuration, and proper `.gitignore` setup.
 
-### Run with TUI (`run` or default)
+**Options:**
+- `-s, --scripts-dir <dir>` - Directory for scripts (default: `scripts`)
+- `-t, --tmp-dir <dir>` - Directory for temporary files (default: `tmp`)
+- `-f, --force` - Overwrite existing files and directories
+
+### Interactive Terminal UI
 
 ```bash
 scriptit run
@@ -119,204 +140,220 @@ scriptit run
 scriptit
 ```
 
-This opens an interactive Terminal UI where you can:
-- Browse and select scripts with arrow keys (↑↓) or j/k
-- View configuration details
-- See real-time script output
-- Navigate with keyboard shortcuts:
-  - **↑↓** or **j/k**: Navigate script list
-  - **Tab**: Switch between panels
-  - **Enter**: Execute selected script
-  - **C**: Toggle configuration panel
-  - **F**: Toggle file list
-  - **R**: Refresh script list
-  - **Q** or **Ctrl+C**: Quit
+**Options:**
+- `-c, --config <path>` - Path to runner configuration file
+- `-s, --scripts-dir <dir>` - Override scripts directory from config
+- `-t, --tmp-dir <dir>` - Override temporary directory from config
+- `--no-tui` - Run without Terminal UI, just list available scripts
+- `--force-tui` - Force TUI mode even when debug is enabled
 
-### Execute Single Script (`exec`)
+**Navigation:**
+- **↑↓** or **j/k**: Navigate scripts • **Tab**: Switch panels • **Enter**: Execute
+- **C**: Toggle config • **F**: Toggle files • **R**: Refresh • **Q**: Quit
+
+### Execute Single Scripts
 
 ```bash
+# Basic execution (colored console enabled by default)
 scriptit exec ./scripts/my-script.ts
-# or with environment variables
-scriptit exec ./scripts/my-script.ts -e NODE_ENV=production API_KEY=secret
-# or from a different working directory
-scriptit --pwd /path/to/project exec ./scripts/my-script.ts
+
+# With environment variables
+scriptit exec ./scripts/deploy.ts -e NODE_ENV=production API_KEY=secret
+
+# With custom configuration
+scriptit exec ./scripts/my-script.ts -c custom.config.js
+
+# Multiple environment variables
+scriptit exec ./scripts/script.ts -e NODE_ENV=prod -e DEBUG=false -e PORT=8080
 ```
 
-### Working Directory Option (`--pwd`)
+**Options:**
+- `-c, --config <path>` - Path to runner configuration file
+- `-e, --env <vars...>` - Set environment variables (e.g., NAME=value X=Y)
 
-The `--pwd` option allows you to run ScriptIt from any directory while having all relative paths resolve from a specific location:
+### Global Options
+
+Available for all commands:
 
 ```bash
-# Run from anywhere, but resolve paths from /path/to/project
-scriptit --pwd /path/to/project run
+# Enable debug mode with verbose logging
+scriptit --debug exec ./scripts/my-script.ts
 
-# Execute a script with working directory
+# Set working directory (all relative paths resolve from here)
 scriptit --pwd /path/to/project exec ./scripts/deploy.ts
 
-# Initialize a project in a specific directory
-scriptit --pwd /path/to/new-project init
+# Show version
+scriptit --version
+
+# Show help
+scriptit --help
 ```
 
-This is particularly useful for:
-- **CI/CD pipelines** - Run scripts from build directories
-- **Automation tools** - Execute scripts from different project locations
-- **Lambda functions** - Point to existing function directories
-- **Multi-project setups** - Manage scripts across different repositories
+### Working Directory Support
 
-## Script Types Supported
+The `--pwd` option is perfect for:
+- **CI/CD pipelines** - Run from build directories
+- **Multi-project setups** - Manage scripts across repositories
+- **Lambda integration** - Point to existing function directories
 
-ScriptIt supports multiple script patterns:
+```bash
+# Change working directory before execution
+scriptit --pwd /path/to/project run
 
-### Traditional Execute Pattern
+# All relative paths resolve from the specified directory
+scriptit --pwd /app exec ./scripts/deploy.ts
+```
+
+## Script Types & Examples
+
+### Traditional Lifecycle Pattern
+
 ```typescript
-// scripts/traditional.ts
-export const description = "Traditional script with lifecycle";
+// scripts/deployment.ts
+export const description = "Deploy application with full lifecycle";
 
 export async function tearUp(context) {
-  // Setup logic
-  return setupData;
+  context.log('Setting up deployment...');
+  return { startTime: Date.now() };
 }
 
 export async function execute(context, tearUpResult) {
-  // Main logic
+  const console = context.console || global.console;
+  
+  console.info('Starting deployment...');
+  console.warn('This will overwrite production!');
+  
+  // Main deployment logic
+  const result = await deployApplication(context.env.API_KEY);
+  
+  console.log('Deployment completed successfully');
   return result;
 }
 
 export async function tearDown(context, executeResult, tearUpResult) {
-  // Cleanup logic
+  const duration = Date.now() - tearUpResult.startTime;
+  context.log(`Deployment completed in ${duration}ms`);
 }
 ```
 
 ### Lambda/Default Export Pattern
+
 ```typescript
-// scripts/lambda.ts
-export const description = "Lambda-style script";
+// scripts/data-processor.ts
+export const description = "Process data with colored output";
 
 export default async function(context) {
-  // Your existing lambda function logic
-  return result;
+  const console = context.console || global.console;
+  
+  console.log('Processing data...');
+  console.info(`Environment: ${context.env.NODE_ENV}`);
+  
+  try {
+    const result = await processLargeDataset(context.env.INPUT_FILE);
+    console.log('✅ Processing completed successfully');
+    return result;
+  } catch (error) {
+    console.error('❌ Processing failed:', error.message);
+    throw error;
+  }
 }
 ```
 
-### Debugging
+### Enhanced Context Object
 
-ScriptIt uses an environment variable to enable detailed debug logging to the console. This is helpful for troubleshooting issues with configuration loading, script discovery, or internal operations.
-
-To enable debug mode, set the `SCRIPTIT_DEBUG` environment variable to `true`:
-
-**Bash/Zsh:**
-
-```bash
-export SCRIPTIT_DEBUG=true
-scriptit run
-# or for a single command
-SCRIPTIT_DEBUG=true scriptit exec ./scripts/my-script.ts
+```typescript
+interface ScriptContext {
+  // Enhanced console with colors (when enabled)
+  console: {
+    log: (...args: unknown[]) => void;    // White
+    info: (...args: unknown[]) => void;   // Blue
+    warn: (...args: unknown[]) => void;   // Yellow  
+    error: (...args: unknown[]) => void;  // Red
+    debug: (...args: unknown[]) => void;  // Gray
+  };
+  
+  // Environment & configuration
+  env: Record<string, string | undefined>;
+  tmpDir: string;
+  configPath?: string;
+  log: (message: string) => void;
+  params: Record<string, unknown>;
+  
+  // Default parameters from config
+  [key: string]: unknown;
+}
 ```
 
 ## Library Usage
 
-ScriptIt can be used programmatically in your applications across different runtimes:
+### Basic Integration
 
-**Node.js/Bun:**
 ```typescript
 import { createScriptRunner } from '@glyphtek/scriptit';
-```
 
-**Deno:**
-```typescript
-import { createScriptRunner } from "npm:@glyphtek/scriptit";
-```
-
-**Example usage:**
-```typescript
-// Basic usage
 const runner = await createScriptRunner({
   scriptsDir: './scripts',
   tmpDir: './tmp',
+  consoleInterception: { enabled: true },  // Enable colored console
   excludePatterns: ['*.helper.*', '_*'],
 });
 
-// With working directory (all paths resolve from this directory)
-const runner = await createScriptRunner({
-  workingDirectory: '/path/to/project',
-  scriptsDir: './scripts',  // Resolves to /path/to/project/scripts
-  tmpDir: './tmp',          // Resolves to /path/to/project/tmp
-});
-
 // Execute scripts
-const result = await runner.executeScript('my-script.ts', {
-  params: { customParam: 'value' },
-  env: { NODE_ENV: 'production' },
+const result = await runner.executeScript('deploy.ts', {
+  params: { environment: 'production' },
+  env: { API_KEY: 'secret' }
 });
-
-// List available scripts
-const scripts = await runner.listScripts();
 
 // Event handling
-runner.on('script:beforeExecute', (scriptPath, params) => {
-  console.log(`Executing: ${scriptPath}`);
+runner.on('script:beforeExecute', (scriptPath) => {
+  console.log(`🚀 Executing: ${scriptPath}`);
 });
 ```
 
-### Working Directory in Library Mode
-
-The `workingDirectory` option is particularly useful for:
+### Advanced Configuration
 
 ```typescript
-// CI/CD integration
-const runner = await createScriptRunner({
-  workingDirectory: process.env.BUILD_DIR,
-  scriptsDir: './deployment-scripts',
-});
-
-// Multi-project management
+// Multi-project setup
 const projectRunner = await createScriptRunner({
   workingDirectory: '/projects/my-app',
-  scriptsDir: './scripts',
+  scriptsDir: './deployment-scripts',
+  envFiles: ['.env', '.env.production'],
+  defaultParams: {
+    projectName: 'My App',
+    version: process.env.npm_package_version
+  }
 });
 
 // Lambda function integration
 const lambdaRunner = await createScriptRunner({
   workingDirectory: '/lambda-functions',
-  scriptsDir: './',  // Use the lambda directory directly
+  scriptsDir: './',
   excludePatterns: ['node_modules/**', '*.test.*'],
+  consoleInterception: { enabled: true }
 });
 ```
 
-## Configuration (`runner.config.js`)
+## Configuration
 
-ScriptIt uses a configuration file to define how scripts are discovered and executed. Create a `runner.config.js` (or `.ts`) file in your project root:
+Create a `runner.config.js` file in your project root:
 
 ```javascript
 // runner.config.js
 export default {
-  // Directory containing your scripts (relative to config file)
   scriptsDir: './scripts',
-  
-  // Directory for temporary files (relative to config file)
   tmpDir: './tmp',
-  
-  // Environment files to load (in order of precedence)
-  envFiles: [
-    '.env',          // Base environment
-    '.env.local',    // Local overrides (gitignored)
-    '.env.production' // Environment-specific
-  ],
-  
-  // Patterns to exclude from script discovery
+  envFiles: ['.env', '.env.local', '.env.production'],
   excludePatterns: [
-    '**/node_modules/**',  // Exclude dependencies
-    '**/*.test.*',         // Exclude test files
-    '**/*.helper.*',       // Exclude helper files
-    '_*',                  // Exclude files starting with underscore
-    '**/helpers/**'        // Exclude helpers directory
+    '**/node_modules/**',
+    '**/*.test.*',
+    '**/*.helper.*',
+    '_*',
+    '**/helpers/**'
   ],
-  
-  // Default parameters available to all scripts
   defaultParams: {
     appName: 'My Application',
     version: '1.0.0',
-    apiUrl: '${API_BASE_URL}/api/v1', // Environment variable interpolation
+    apiUrl: '${API_BASE_URL}/api/v1'  // Environment variable interpolation
   }
 };
 ```
@@ -325,243 +362,138 @@ export default {
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `scriptsDir` | `string` | `"scripts"` | Directory containing executable scripts |
-| `tmpDir` | `string` | `"tmp"` | Directory for temporary files |
+| `scriptsDir` | `string` | `"scripts"` | Scripts directory path |
+| `tmpDir` | `string` | `"tmp"` | Temporary files directory |
 | `envFiles` | `string[]` | `[".env"]` | Environment files to load |
-| `excludePatterns` | `string[]` | `[]` | Glob patterns to exclude from script discovery |
-| `defaultParams` | `object` | `{}` | Default parameters passed to all scripts |
+| `excludePatterns` | `string[]` | `[]` | Script exclusion patterns |
+| `defaultParams` | `object` | `{}` | Default script parameters |
 
-## Creating Scripts
+## Migration Guide
 
-### Script Structure
+### Upgrading to v0.5.0 (Colored Console)
 
-ScriptIt supports two main script patterns:
-
-#### 1. Traditional Lifecycle Pattern
-
-```typescript
-// scripts/example.ts
-export const description = "Example script with full lifecycle";
-
-// Optional: Setup phase
-export async function tearUp(context) {
-  context.log('Setting up resources...');
-  
-  // Initialize databases, create temp files, etc.
-  const setupData = {
-    startTime: Date.now(),
-    tempFile: `${context.tmpDir}/setup-${Date.now()}.json`
-  };
-  
-  return setupData; // Passed to execute and tearDown
-}
-
-// Required: Main execution logic
-export async function execute(context, tearUpResult) {
-  context.log('Executing main logic...');
-  
-  // Access environment variables
-  const apiKey = context.env.API_KEY;
-  
-  // Access default parameters
-  const appName = context.appName;
-  
-  // Use tearUp results
-  const duration = Date.now() - tearUpResult.startTime;
-  
-  return { success: true, duration };
-}
-
-// Optional: Cleanup phase
-export async function tearDown(context, executeResult, tearUpResult) {
-  context.log('Cleaning up...');
-  
-  // Clean up resources, delete temp files, etc.
-  if (tearUpResult.tempFile) {
-    // Clean up temp file
-  }
-}
+**CLI Usage:**
+```bash
+# Colored console is enabled by default in CLI
+scriptit exec my-script.js
 ```
 
-#### 2. Lambda/Default Export Pattern
-
+**Library Usage:**
 ```typescript
-// scripts/lambda-style.ts
-export const description = "Lambda-style script";
+const runner = createScriptRunner({
+  consoleInterception: { enabled: true }  // Enable colored console
+});
+```
 
-// Perfect for existing lambda functions
+**Script Updates:**
+```typescript
+// Use enhanced console for best results
 export default async function(context) {
-  context.log('Lambda execution starting...');
-  
-  // Your existing lambda logic here
-  const result = await processData(context.env.INPUT_DATA);
-  
-  return result;
+  const console = context.console || global.console;
+  console.log('This will be colored when interception is enabled');
 }
 ```
 
-### The `context` Object
+### Upgrading to v0.4.0 (TUI & Default Exports)
 
-Every script receives a `context` object with the following properties:
+- **New TUI interface:** `scriptit run` now opens interactive UI
+- **Default export support:** Lambda functions work directly
+- **No breaking changes:** Existing scripts continue to work
 
-```typescript
-interface ScriptContext {
-  // Environment variables (from .env files + system + defaults)
-  env: Record<string, string | undefined>;
-  
-  // Temporary directory path
-  tmpDir: string;
-  
-  // Path to the loaded configuration file
-  configPath?: string;
-  
-  // Logging function
-  log: (message: string) => void;
-  
-  // Default parameters from config (also available in env)
-  [key: string]: any;
-}
-```
+## Troubleshooting
 
-#### Using the Context
+### Common Issues
 
-```typescript
-export async function execute(context) {
-  // Logging
-  context.log('Starting execution...');
-  
-  // Environment variables
-  const dbUrl = context.env.DATABASE_URL;
-  const nodeEnv = context.env.NODE_ENV || 'development';
-  
-  // Default parameters
-  const appName = context.appName; // From defaultParams
-  
-  // Temporary files
-  const tempFile = `${context.tmpDir}/processing-${Date.now()}.json`;
-  
-  // Configuration info
-  context.log(`Config loaded from: ${context.configPath}`);
-}
-```
+**🔍 Script not found**
+- Check your `scriptsDir` configuration
+- Ensure files have `.js` or `.ts` extensions
+- Verify exclude patterns aren't filtering your scripts
 
-### Script Discovery Rules
+**🌍 Environment variables not loading**
+- Ensure `.env` files are in project root or configured in `envFiles`
+- Check file permissions and syntax
+- Use `context.log()` to debug loaded variables
 
-1. **File Extensions**: Only `.js` and `.ts` files are discovered
-2. **Recursive Search**: Searches all subdirectories
-3. **Exclude Patterns**: Files matching `excludePatterns` are ignored
-4. **Function Priority**: `default` export takes precedence over `execute` function
+**🖥️ TUI not working properly**
+- Some terminals have limited support - try `--no-tui`
+- Ensure terminal size is adequate (minimum 80x24)
+- Try different terminal emulators
+- Use `--debug` for verbose logging
 
-### Best Practices
+**🎨 Colored console not working**
+- Colored console is enabled by default in CLI mode
+- For library usage, set `consoleInterception: { enabled: true }`
+- Some terminals may not support all colors
+- Ensure scripts use `context.console` fallback pattern
 
-- **Use descriptive names**: `deploy-production.ts` vs `script1.ts`
-- **Add descriptions**: Export a `description` string for documentation
-- **Handle errors gracefully**: Use try/catch blocks and meaningful error messages
-- **Use tearUp/tearDown**: For resource management and cleanup
-- **Leverage environment variables**: For configuration and secrets
-- **Keep scripts focused**: One responsibility per script
+**🔧 Permission errors**
+- Check file permissions for script and temp directories
+- Ensure ScriptIt has necessary runtime permissions
+- Verify working directory access with `--pwd`
+
+**⚙️ Debug mode issues**
+- Use `--debug` flag for verbose logging
+- TUI is disabled by default in debug mode (use `--force-tui` to override)
+- Check `SCRIPTIT_DEBUG` environment variable
+
+### Getting Help
+
+If you encounter issues not covered here, please check our [troubleshooting guide](https://scriptit.github.io/troubleshooting) or open an issue.
 
 ## Development
 
-### Prerequisites
-
-- **Node.js** 18+ or **Bun** 1.0+ or **Deno** (latest)
-- **TypeScript** 5.0+ (for development)
-
-### Setup
+### Quick Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/glyphtek/scriptit.git
 cd scriptit
-
-# Install dependencies
 bun install
-# or
-npm install
-
-# Build the project
 bun run build
-
-# Run tests
 bun test
 ```
 
-### Project Structure
+### Available Scripts
 
-```
-src/
-├── common/              # Shared utilities
-│   ├── logger/          # Logging functionality
-│   ├── types/           # TypeScript interfaces
-│   └── utils/           # Utility functions
-├── core/                # Core functionality
-│   ├── config-loader.ts # Configuration loading
-│   ├── env-loader.ts    # Environment variable loading
-│   └── script-executor.ts # Script execution engine
-├── ui/                  # User interface
-│   └── blessed-ui.ts    # Terminal UI implementation
-├── cli.ts               # Command-line interface
-└── lib.ts               # Library API
-
-tests/                   # Test suites
-examples/                # Usage examples
-├── ui/                  # CLI/TUI examples
-└── lib/                 # Library usage examples
-```
-
-### Scripts
-
-```bash
-# Development
-bun run dev              # Run CLI in development mode
-bun run dev:watch        # Watch mode
-
-# Building
-bun run build            # Build for production
-bun run build:bun        # Build with Bun bundler
-
-# Testing
-bun test                 # Run all tests
-bun run test:lib         # Run library tests only
-bun run test:ui          # Test UI examples
-
-# Code Quality
-bun run lint             # Lint code
-bun run format           # Format code
-bun run check            # Lint + format
-```
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Development mode |
+| `bun run build` | Production build |
+| `bun test` | Run all tests |
+| `bun run lint` | Code linting |
+| `bun run format` | Code formatting |
 
 ### Contributing Guidelines
 
-1. **Fork the repository** and create a feature branch
-2. **Write tests** for new functionality
-3. **Follow TypeScript best practices** and existing code style
-4. **Update documentation** for new features
-5. **Ensure cross-runtime compatibility** (Node.js, Deno, Bun)
-6. **Run tests and linting** before submitting
+1. **Fork & Clone:** Create your feature branch
+2. **Test:** Write tests for new functionality  
+3. **Quality:** Follow TypeScript best practices
+4. **Compatibility:** Ensure cross-runtime support
+5. **Documentation:** Update docs for new features
 
-## Contributing
+## Community & Support
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+### 🤝 Get Help
 
-### Ways to Contribute
+- 🐛 [Report Issues](https://github.com/glyphtek/scriptit/issues)
+- 💬 [Join Discussions](https://github.com/glyphtek/scriptit/discussions)
+- 📖 [Documentation](https://scriptit.github.io/)
+- 📚 [API Reference](https://scriptit.github.io/library/api)
 
-- **Bug Reports**: Open an issue with reproduction steps
-- **Feature Requests**: Suggest new functionality
-- **Code Contributions**: Submit pull requests
-- **Documentation**: Improve docs and examples
-- **Testing**: Add test cases and improve coverage
+### 🌟 Show Support
 
-### Development Workflow
+- ⭐ [Star on GitHub](https://github.com/glyphtek/scriptit)
+- 🐦 [Follow on Twitter](https://twitter.com/glyphtek)
+- 💖 [Sponsor Development](https://github.com/sponsors/sergiohromano)
 
-1. Fork and clone the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and add tests
-4. Run tests: `bun test`
-5. Commit changes: `git commit -m 'Add amazing feature'`
-6. Push to branch: `git push origin feature/amazing-feature`
-7. Open a Pull Request
+### 🚀 Contributing
+
+We welcome contributions! Ways to help:
+
+- **Bug Reports:** Detailed reproduction steps
+- **Feature Requests:** Describe your use case
+- **Code Contributions:** PRs with tests
+- **Documentation:** Improve guides and examples
+- **Community:** Help others in discussions
 
 ## License
 

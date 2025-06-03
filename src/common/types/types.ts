@@ -1,10 +1,19 @@
 // src/common/types/types.ts
+export interface ColoredConsole {
+  log: (...args: unknown[]) => void;      // White output
+  error: (...args: unknown[]) => void;    // Red output
+  warn: (...args: unknown[]) => void;     // Yellow output
+  info: (...args: unknown[]) => void;     // Blue output
+  debug: (...args: unknown[]) => void;    // Gray output
+}
+
 export interface ScriptContext {
   env: Record<string, string | undefined>;
   tmpDir: string;
   params: Record<string, unknown>;
   configPath?: string;
   log: (message: string) => void; // Function to log to the TUI
+  console?: ColoredConsole; // Enhanced console with colored output (when console interception is enabled)
   [key: string]: unknown; // Allow other custom params
 }
 

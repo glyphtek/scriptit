@@ -1,6 +1,6 @@
 {
   "name": "@glyphtek/scriptit",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A cross-runtime CLI and library for running scripts with environment management, TUI, and support for lambda functions. Optimized for Bun with compatibility for Node.js and Deno.",
   "author": "Sergio Romano <sergio.h.romano@gmail.com>",
   "license": "MIT",
@@ -28,7 +28,7 @@
   "bugs": {
     "url": "https://github.com/glyphtek/scriptit/issues"
   },
-  "homepage": "https://github.com/glyphtek/scriptit#readme",
+  "homepage": "https://scriptit.github.io/",
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/sergiohromano"
@@ -48,6 +48,7 @@
   "files": [
     "dist",
     "bin",
+    "docs",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
@@ -66,7 +67,13 @@
     "test": "bun test",
     "test:lib": "bun test tests/lib-example.test.ts tests/lib-integration.test.ts tests/run-lib-example.test.ts tests/default-function.test.ts tests/pwd-option.test.ts",
     "test:ui": "cd examples/ui && ../../bin/scriptit.sh --no-tui",
-    "test:examples": "cd examples/lib && bun start"
+    "test:examples": "cd examples/lib && bun start",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "overrides": {
+    "vite": "npm:rolldown-vite@latest"
   },
   "dependencies": {
     "blessed": "^0.1.81",
@@ -81,7 +88,8 @@
     "@types/minimatch": "^5.1.2",
     "@types/node": "^20.11.20",
     "bun-types": "latest",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitepress": "^1.6.3"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

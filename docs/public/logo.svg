@@ -1,0 +1,14 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#3B82F6" stroke="#1E40AF" stroke-width="2"/>
+  
+  <!-- Script/code icon -->
+  <path d="M20 22L26 28L20 34" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M44 22L38 28L44 34" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M34 18L30 46" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Runtime indicators (small dots) -->
+  <circle cx="16" cy="48" r="2" fill="#10B981"/>
+  <circle cx="32" cy="52" r="2" fill="#F59E0B"/>
+  <circle cx="48" cy="48" r="2" fill="#EF4444"/>
+</svg> 

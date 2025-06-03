@@ -7,6 +7,7 @@ import type {
   RunnerConfig,
   ScriptContext,
   ScriptModule,
+  ColoredConsole,
 } from "./common/types/index.js";
 import { getScriptFiles } from "./common/utils/index.js"; // Import getScriptFiles for script discovery
 import {
@@ -251,4 +252,5 @@ export type {
   RunnerConfig,
   ScriptContext,
   ScriptModule,
+  ColoredConsole,
 } from "./common/types/index.js";

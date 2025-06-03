@@ -32,7 +32,7 @@ program
   .description(
     "ScriptIt - A powerful CLI and library for running scripts with environment management, TUI, and support for lambda functions",
   )
-  .version("0.5.0");
+  .version("0.5.1");
 
 program
   .command("init")
