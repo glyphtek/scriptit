@@ -1,9 +1,20 @@
 // src/core/script-executor.ts
 import { existsSync as pathExistsSync } from "node:fs";
+import fs from "node:fs/promises";
 import path from "node:path";
 import chalk from "chalk";
 import { logger } from "../common/logger/index.js";
-import type { ScriptContext, ScriptModule } from "../common/types/index.js";
+import type {
+  RunnerConfig,
+  ScriptContext,
+  ScriptModule,
+  VariableDefinition,
+} from "../common/types/index.js";
+import {
+  interpolateEnvVars,
+  loadEnvironmentVariables,
+  normalizeVariableDefinitions,
+} from "../common/utils/index.js";
 
 export interface ScriptExecutorOptions {
   consoleInterception?: {
@@ -19,20 +30,40 @@ export interface ScriptExecutor {
   run: (scriptPath: string, context: ScriptContext) => Promise<unknown>;
 }
 
+export interface EnvironmentPrompter {
+  promptForVariables(
+    variables: VariableDefinition[],
+    existingEnv: Record<string, string | undefined>,
+  ): Promise<Record<string, string>>;
+}
+
+export interface ScriptExecutionOptions {
+  scriptPath: string;
+  config: RunnerConfig;
+  cliProvidedEnv?: Record<string, string | undefined>;
+  cliEnvPrompts?: string[];
+  prompter?: EnvironmentPrompter;
+  logger?: {
+    info: (message: string) => void;
+    warn: (message: string) => void;
+    error: (message: string) => void;
+  };
+}
+
 /**
  * Safe string conversion that avoids circular references
  */
 function safeStringify(arg: unknown): string {
-  if (arg === null) return 'null';
-  if (arg === undefined) return 'undefined';
-  if (typeof arg === 'string') return arg;
-  if (typeof arg === 'number' || typeof arg === 'boolean') return String(arg);
-  if (typeof arg === 'function') return '[Function]';
-  if (typeof arg === 'symbol') return '[Symbol]';
-  if (typeof arg === 'bigint') return `${String(arg)}n`;
-  
+  if (arg === null) return "null";
+  if (arg === undefined) return "undefined";
+  if (typeof arg === "string") return arg;
+  if (typeof arg === "number" || typeof arg === "boolean") return String(arg);
+  if (typeof arg === "function") return "[Function]";
+  if (typeof arg === "symbol") return "[Symbol]";
+  if (typeof arg === "bigint") return `${String(arg)}n`;
+
   // For objects, be very conservative to avoid circular references
-  if (typeof arg === 'object') {
+  if (typeof arg === "object") {
     if (arg instanceof Error) {
       return `Error: ${arg.message}`;
     }
@@ -42,16 +73,19 @@ function safeStringify(arg: unknown): string {
     if (Array.isArray(arg)) {
       return `[Array(${arg.length})]`;
     }
-    return '[Object]';
+    return "[Object]";
   }
-  
-  return '[Unknown]';
+
+  return "[Unknown]";
 }
 
 /**
  * Creates a colored console-like object that redirects to the log function
  */
-function createColoredConsole(logFunction: (message: string) => void, useColors = true) {
+function createColoredConsole(
+  logFunction: (message: string) => void,
+  useColors = true,
+) {
   const colorFunctions = {
     log: useColors ? chalk.white : (text: string) => text,
     error: useColors ? chalk.red : (text: string) => text,
@@ -64,7 +98,7 @@ function createColoredConsole(logFunction: (message: string) => void, useColors 
     return (...args: unknown[]) => {
       try {
         // Use safe string conversion to avoid circular references
-        const message = args.map(arg => safeStringify(arg)).join(' ');
+        const message = args.map((arg) => safeStringify(arg)).join(" ");
         const coloredMessage = colorFunctions[level](message);
         logFunction(coloredMessage);
       } catch (error) {
@@ -74,11 +108,11 @@ function createColoredConsole(logFunction: (message: string) => void, useColors 
   };
 
   return {
-    log: createMethod('log'),
-    error: createMethod('error'),
-    warn: createMethod('warn'),
-    info: createMethod('info'),
-    debug: createMethod('debug'),
+    log: createMethod("log"),
+    error: createMethod("error"),
+    warn: createMethod("warn"),
+    info: createMethod("info"),
+    debug: createMethod("debug"),
   };
 }
 
@@ -110,15 +144,20 @@ export function createScriptExecutorInstance(
       let enhancedContext = context;
       if (options.consoleInterception?.enabled) {
         const logFunc = options.consoleInterception.logFunction || context.log;
-        const coloredConsole = createColoredConsole(logFunc, options.consoleInterception.useColors);
-        
+        const coloredConsole = createColoredConsole(
+          logFunc,
+          options.consoleInterception.useColors,
+        );
+
         // Add colored console to context instead of replacing global console
         enhancedContext = {
           ...context,
           console: coloredConsole,
         };
-        
-        logger.debug(`Console interception enabled for ${path.basename(absoluteScriptPath)}`);
+
+        logger.debug(
+          `Console interception enabled for ${path.basename(absoluteScriptPath)}`,
+        );
       }
 
       try {
@@ -164,7 +203,10 @@ export function createScriptExecutorInstance(
           `Script executor: Running ${functionName} for ${path.basename(absoluteScriptPath)}`,
         );
         enhancedContext.log(`Running ${functionName}()`);
-        const executeResult = await executeFunction(enhancedContext, tearUpResult);
+        const executeResult = await executeFunction(
+          enhancedContext,
+          tearUpResult,
+        );
 
         // Execute tearDown if it exists
         if (typeof scriptModule.tearDown === "function") {
@@ -172,7 +214,11 @@ export function createScriptExecutorInstance(
             `Script executor: Running tearDown for ${path.basename(absoluteScriptPath)}`,
           );
           enhancedContext.log("Running tearDown()");
-          await scriptModule.tearDown(enhancedContext, executeResult, tearUpResult);
+          await scriptModule.tearDown(
+            enhancedContext,
+            executeResult,
+            tearUpResult,
+          );
           logger.debug(
             `Script executor: tearDown completed for ${path.basename(absoluteScriptPath)}`,
           );
@@ -188,4 +234,157 @@ export function createScriptExecutorInstance(
       }
     },
   };
+}
+
+/**
+ * High-level script execution function that handles environment variable prompting
+ * and script execution. Can be used by both CLI and TUI with different prompters.
+ */
+export async function executeScriptWithEnvironment(
+  options: ScriptExecutionOptions,
+): Promise<unknown> {
+  const {
+    scriptPath,
+    config,
+    cliProvidedEnv = {},
+    cliEnvPrompts = [],
+    prompter,
+    logger: customLogger,
+  } = options;
+
+  const log = customLogger || {
+    info: (msg: string) => console.log(msg),
+    warn: (msg: string) => console.warn(msg),
+    error: (msg: string) => console.error(msg),
+  };
+
+  const absoluteScriptPath = path.resolve(scriptPath);
+  if (!pathExistsSync(absoluteScriptPath)) {
+    throw new Error(`Script file not found at ${absoluteScriptPath}`);
+  }
+
+  // Ensure tmpDir exists from config
+  if (!pathExistsSync(config.tmpDir)) {
+    try {
+      await fs.mkdir(config.tmpDir, { recursive: true });
+      log.info(`Created temporary directory: ${config.tmpDir}`);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      throw new Error(
+        `Error creating temporary directory ${config.tmpDir}: ${errorMessage}`,
+      );
+    }
+  }
+
+  // Load script module to check for variable definitions
+  let scriptVariables: VariableDefinition[] = [];
+  try {
+    const scriptModule: ScriptModule = await import(
+      `file://${absoluteScriptPath}?v=${Date.now()}`
+    );
+
+    if (scriptModule.variables) {
+      scriptVariables = normalizeVariableDefinitions(scriptModule.variables);
+    }
+  } catch (error: unknown) {
+    // If we can't load the script for variable checking, continue without prompting
+    // The actual error will be caught during execution
+    log.warn(
+      `Could not pre-load script for variable checking: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  // Combine CLI env prompts with script's declared variables
+  const allVariables = [
+    ...normalizeVariableDefinitions(cliEnvPrompts),
+    ...scriptVariables,
+  ];
+
+  // Remove duplicates (CLI takes precedence)
+  const uniqueVariables = allVariables.filter(
+    (variable, index, array) =>
+      array.findIndex((v) => v.name === variable.name) === index,
+  );
+
+  // Load base environment
+  const baseEnv = loadEnvironmentVariables(
+    config.envFiles.map((f) => path.resolve(f)),
+  );
+  const interpolatedDefaultParams = config.defaultParams
+    ? interpolateEnvVars(config.defaultParams, baseEnv)
+    : {};
+
+  // Initial full environment (before prompting)
+  const initialFullEnv = {
+    ...baseEnv,
+    ...(typeof interpolatedDefaultParams === "object" &&
+    interpolatedDefaultParams !== null
+      ? interpolatedDefaultParams
+      : {}),
+    ...cliProvidedEnv,
+  };
+
+  // Prompt for any missing variables
+  let promptedVars: Record<string, string> = {};
+  if (uniqueVariables.length > 0 && prompter) {
+    promptedVars = await prompter.promptForVariables(
+      uniqueVariables,
+      initialFullEnv,
+    );
+
+    // Set prompted variables in process.env so they're available to the script
+    for (const [key, value] of Object.entries(promptedVars)) {
+      process.env[key] = value;
+    }
+  }
+
+  // CLI-provided env vars take precedence over config default params, which take precedence over .env files
+  const fullEnv = {
+    ...baseEnv,
+    ...(typeof interpolatedDefaultParams === "object" &&
+    interpolatedDefaultParams !== null
+      ? interpolatedDefaultParams
+      : {}),
+    ...cliProvidedEnv,
+    ...promptedVars, // Add prompted variables
+  };
+
+  log.info(`Running script: ${path.basename(absoluteScriptPath)}`);
+  log.info(`Config file used: ${config.loadedConfigPath || "Defaults"}`);
+  log.info(`Temp directory: ${config.tmpDir}`);
+  log.info(`Env files considered: ${config.envFiles.join(", ")}`);
+
+  // Show prompted variables (without values for security)
+  if (Object.keys(promptedVars).length > 0) {
+    log.info(`Prompted variables: ${Object.keys(promptedVars).join(", ")}`);
+  }
+
+  // Create script executor with console interception enabled
+  const scriptExecutor = createScriptExecutorInstance({
+    consoleInterception: {
+      enabled: true, // Enable colored console interception
+      includeLevel: false, // Don't include log level prefix for cleaner output
+      preserveOriginal: false, // Don't call original console methods to avoid duplication
+      useColors: true, // Enable colors for different log levels
+    },
+  });
+
+  const context: ScriptContext = {
+    env: fullEnv,
+    tmpDir: config.tmpDir,
+    configPath: config.loadedConfigPath,
+    params: {},
+    log: (msg: string) => log.info(`[SCRIPT OUTPUT] ${msg}`),
+  };
+
+  const result = await scriptExecutor.run(absoluteScriptPath, context);
+  log.info(`Script ${path.basename(absoluteScriptPath)} finished successfully`);
+
+  if (result !== undefined) {
+    log.info(
+      `Script result: ${typeof result === "object" ? JSON.stringify(result) : result}`,
+    );
+  }
+
+  return result;
 }

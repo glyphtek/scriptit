@@ -30,7 +30,7 @@ export default defineConfig({
       { text: 'Library', link: '/library/api' },
       { text: 'Examples', link: '/examples/' },
       {
-        text: 'v0.5.1',
+        text: 'v0.7.0',
         items: [
           { text: 'Changelog', link: '/changelog' },
           { text: 'Contributing', link: '/contributing' },
@@ -80,6 +80,7 @@ export default defineConfig({
             { text: 'Writing Scripts', link: '/guides/writing-scripts' },
             { text: 'TypeScript Support', link: '/guides/typescript' },
             { text: 'Best Practices', link: '/guides/best-practices' },
+            { text: 'Architecture Guide', link: '/guides/architecture' },
             { text: 'Migration Guide', link: '/guides/migration' },
           ]
         },

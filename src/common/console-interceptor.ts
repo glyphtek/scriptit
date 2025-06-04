@@ -17,8 +17,12 @@ export interface ConsoleInterceptor {
 export function createConsoleInterceptor(
   options: ConsoleInterceptorOptions,
 ): ConsoleInterceptor {
-  const { logFunction, includeLevel = false, preserveOriginal = false } = options;
-  
+  const {
+    logFunction,
+    includeLevel = false,
+    preserveOriginal = false,
+  } = options;
+
   // Store original console methods
   const originalConsole = {
     log: console.log.bind(console),
@@ -38,15 +42,15 @@ export function createConsoleInterceptor(
 
       try {
         // Very simple string conversion
-        const message = args.map(arg => String(arg)).join(' ');
-        
+        const message = args.map((arg) => String(arg)).join(" ");
+
         // Add level prefix if requested
-        const finalMessage = includeLevel 
+        const finalMessage = includeLevel
           ? `[${level.toUpperCase()}] ${message}`
           : message;
-        
+
         logFunction(finalMessage);
-        
+
         if (preserveOriginal) {
           originalConsole[level as keyof typeof originalConsole](...args);
         }
@@ -64,11 +68,11 @@ export function createConsoleInterceptor(
 
     try {
       // Replace console methods with intercepted versions
-      console.log = createInterceptedMethod('log');
-      console.error = createInterceptedMethod('error');
-      console.warn = createInterceptedMethod('warn');
-      console.info = createInterceptedMethod('info');
-      console.debug = createInterceptedMethod('debug');
+      console.log = createInterceptedMethod("log");
+      console.error = createInterceptedMethod("error");
+      console.warn = createInterceptedMethod("warn");
+      console.info = createInterceptedMethod("info");
+      console.debug = createInterceptedMethod("debug");
 
       isIntercepting = true;
     } catch (error) {
@@ -104,4 +108,4 @@ export function createConsoleInterceptor(
     stop,
     isActive,
   };
-} 
+}

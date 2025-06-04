@@ -8,6 +8,10 @@ A powerful **cross-runtime** script runner with TUI, environment management, and
 
 **🎨 NEW in v0.5.1:** Enhanced documentation and improved GitHub Pages deployment!
 
+**🎯 NEW in v0.6.0:** Interactive Environment Prompts for secure variable collection!
+
+**🏗️ NEW in v0.7.0:** Unified architecture with CLI refactoring and enhanced TUI experience!
+
 ## 🚀 Quick Start
 
 ```bash
@@ -160,16 +164,23 @@ scriptit exec ./scripts/my-script.ts
 # With environment variables
 scriptit exec ./scripts/deploy.ts -e NODE_ENV=production API_KEY=secret
 
+# With interactive environment prompts
+scriptit exec ./scripts/deploy.ts --env-prompts API_KEY,SECRET_TOKEN
+
 # With custom configuration
 scriptit exec ./scripts/my-script.ts -c custom.config.js
 
 # Multiple environment variables
 scriptit exec ./scripts/script.ts -e NODE_ENV=prod -e DEBUG=false -e PORT=8080
+
+# Combine static and prompted environment variables
+scriptit exec ./scripts/deploy.ts -e NODE_ENV=production --env-prompts API_KEY,SECRET_TOKEN
 ```
 
 **Options:**
 - `-c, --config <path>` - Path to runner configuration file
 - `-e, --env <vars...>` - Set environment variables (e.g., NAME=value X=Y)
+- `--env-prompts <vars...>` - Prompt for environment variables before execution (e.g., API_KEY,SECRET)
 
 ### Global Options
 
@@ -283,6 +294,85 @@ interface ScriptContext {
   [key: string]: unknown;
 }
 ```
+
+## Interactive Environment Prompts
+
+ScriptIt supports interactive prompting for environment variables across both CLI and TUI interfaces, allowing you to securely collect sensitive data at runtime without hardcoding values.
+
+### Universal Prompting
+
+Environment variable prompting works seamlessly across all interfaces:
+
+- **CLI**: Terminal-based prompting with readline
+- **TUI**: Beautiful modal dialogs with visual feedback  
+- **Library**: Programmatic integration with custom prompters
+
+Both interfaces support the same features:
+- **Password masking** with `*` characters
+- **Smart detection** (only prompts for missing variables)
+- **Type-aware prompting** (input vs password fields)
+- **Consistent variable precedence** across all interfaces
+
+### Declarative Method (Script-defined)
+
+Scripts can declare their required environment variables using the `variables` export:
+
+```typescript
+// Full definition with custom prompts and types
+export const variables = [
+  { name: 'API_KEY', message: 'Enter your API key:', type: 'password' },
+  { name: 'USER_NAME', message: 'Enter your username:', type: 'input' },
+];
+
+// Shorthand definition for quick setup
+export const variables = ['API_KEY', 'DATABASE_URL', 'SECRET_TOKEN'];
+
+export async function execute(context) {
+  const console = context.console || global.console;
+  
+  // Variables are automatically prompted and available in context.env
+  console.log(`API Key: ${context.env.API_KEY ? '***hidden***' : 'Not set'}`);
+  console.log(`Username: ${context.env.USER_NAME || 'Not provided'}`);
+  
+  return { success: true };
+}
+```
+
+### Imperative Method (CLI-driven)
+
+Use the `--env-prompts` flag to prompt for any variables on demand:
+
+```bash
+# Prompt for specific variables
+scriptit exec my-script.js --env-prompts API_KEY,SECRET_TOKEN
+
+# Space-separated format also works
+scriptit exec my-script.js --env-prompts API_KEY SECRET_TOKEN
+
+# Works with the run command too
+scriptit run --env-prompts DATABASE_URL,API_KEY
+```
+
+### Variable Types
+
+- **`input`** (default): Regular text input
+- **`password`**: Hidden input with masked characters (`*`)
+
+### Execution Priority
+
+ScriptIt follows this order when collecting environment variables:
+
+1. **Existing Environment**: Variables already set in shell, `.env` files, or via `--env` flag
+2. **Skip Prompting**: Variables that are already set are not prompted again  
+3. **Combine Sources**: CLI `--env-prompts` + script `variables` export (CLI takes precedence for duplicates)
+4. **Interactive Collection**: Prompt for any missing variables
+5. **Script Execution**: All variables available in `context.env`
+
+### Security Features
+
+- **Password masking**: Sensitive inputs are hidden with `*` characters
+- **No logging**: Prompted values are not logged or displayed in output
+- **Process isolation**: Values are set in `process.env` for script duration only
 
 ## Library Usage
 

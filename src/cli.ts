@@ -11,6 +11,7 @@ import type {
   RunnerConfig,
   ScriptContext,
   ScriptModule,
+  VariableDefinition,
 } from "./common/types/index.js";
 import {
   DEFAULT_CONFIG_FILE,
@@ -20,9 +21,82 @@ import {
   interpolateEnvVars,
   loadConfig,
   loadEnvironmentVariables,
+  normalizeVariableDefinitions,
+  parseEnvPromptsList,
+  promptForEnvironmentVariables,
 } from "./common/utils/index.js";
-import { createScriptExecutorInstance } from "./core/script-executor.js";
+import {
+  type EnvironmentPrompter,
+  createScriptExecutorInstance,
+  executeScriptWithEnvironment,
+} from "./core/script-executor.js";
 import { runBlessedTUI as runTUI } from "./ui/index.js";
+
+// Reusable CLI Options
+const CLI_OPTIONS = {
+  // Configuration options
+  config: new Option(
+    "-c, --config <path>",
+    "Path to runner configuration file",
+  ),
+
+  // Directory options
+  scriptsDir: new Option(
+    "-s, --scripts-dir <dir>",
+    "Directory for scripts",
+  ).default(DEFAULT_SCRIPTS_DIR),
+
+  scriptsDirOverride: new Option(
+    "-s, --scripts-dir <dir>",
+    "Override scripts directory from config",
+  ),
+
+  tmpDir: new Option(
+    "-t, --tmp-dir <dir>",
+    "Directory for temporary files",
+  ).default(DEFAULT_TMP_DIR),
+
+  tmpDirOverride: new Option(
+    "-t, --tmp-dir <dir>",
+    "Override temporary directory from config",
+  ),
+
+  // Environment options
+  env: new Option(
+    "-e, --env <vars...>",
+    "Set environment variables (e.g., NAME=Bun X=Y)",
+  ),
+
+  envPrompts: new Option(
+    "--env-prompts <vars...>",
+    "Prompt for environment variables before execution (e.g., API_KEY,SECRET)",
+  ),
+
+  // UI options
+  noTui: new Option(
+    "--no-tui",
+    "Run without Terminal UI, just list available scripts",
+  ),
+
+  forceTui: new Option(
+    "--force-tui",
+    "Force TUI mode even when debug is enabled",
+  ),
+
+  // Init options
+  force: new Option(
+    "-f, --force",
+    "Overwrite existing files and directories if they exist",
+  ),
+
+  // Global options
+  debug: new Option("-d, --debug", "Run in debug mode with verbose logging"),
+
+  pwd: new Option(
+    "--pwd <dir>",
+    "Set working directory for script execution (all relative paths resolve from here)",
+  ),
+} as const;
 
 // Continue with CLI implementation
 const program = new Command();
@@ -32,25 +106,37 @@ program
   .description(
     "ScriptIt - A powerful CLI and library for running scripts with environment management, TUI, and support for lambda functions",
   )
-  .version("0.5.1");
+  .version("0.7.0")
+  .addOption(CLI_OPTIONS.debug)
+  .addOption(CLI_OPTIONS.pwd)
+  .hook("preAction", (thisCommand, actionCommand) => {
+    const opts = thisCommand.opts();
+
+    if (opts.debug) {
+      process.env.SCRIPTIT_DEBUG = "true";
+      console.log(chalk.blue("Debug mode enabled"));
+    }
+
+    if (opts.pwd) {
+      const targetDir = path.resolve(opts.pwd);
+      if (!pathExistsSync(targetDir)) {
+        console.error(
+          chalk.red(`Error: Directory does not exist: ${targetDir}`),
+        );
+        process.exit(1);
+      }
+
+      console.log(chalk.gray(`Changing working directory to: ${targetDir}`));
+      process.chdir(targetDir);
+    }
+  });
 
 program
   .command("init")
   .description("Initialize a new script runner project structure.")
-  .option(
-    "-s, --scripts-dir <dir>",
-    "Directory for scripts",
-    DEFAULT_SCRIPTS_DIR,
-  )
-  .option(
-    "-t, --tmp-dir <dir>",
-    "Directory for temporary files",
-    DEFAULT_TMP_DIR,
-  )
-  .option(
-    "-f, --force",
-    "Overwrite existing files and directories if they exist",
-  )
+  .addOption(CLI_OPTIONS.scriptsDir)
+  .addOption(CLI_OPTIONS.tmpDir)
+  .addOption(CLI_OPTIONS.force)
   .action(async (options) => {
     const scriptsDir = path.resolve(options.scriptsDir);
     const tmpDir = path.resolve(options.tmpDir);
@@ -280,149 +366,11 @@ export default async function(context) {
   });
 
 program
-  .option("-d, --debug", "Run in debug mode with verbose logging")
-  .option(
-    "--pwd <dir>",
-    "Set working directory for script execution (all relative paths resolve from here)",
-  )
-  .hook("preAction", (thisCommand, actionCommand) => {
-    const opts = thisCommand.opts();
-
-    if (opts.debug) {
-      process.env.SCRIPTIT_DEBUG = "true";
-      console.log(chalk.blue("Debug mode enabled"));
-    }
-
-    if (opts.pwd) {
-      const targetDir = path.resolve(opts.pwd);
-      if (!pathExistsSync(targetDir)) {
-        console.error(
-          chalk.red(`Error: Directory does not exist: ${targetDir}`),
-        );
-        process.exit(1);
-      }
-
-      console.log(chalk.gray(`Changing working directory to: ${targetDir}`));
-      process.chdir(targetDir);
-    }
-  });
-
-// Function to execute a single script (will be used by 'exec' command and potentially by TUI later if refactored)
-async function executeScriptFile(
-  scriptPath: string,
-  config: RunnerConfig,
-  cliProvidedEnv: Record<string, string | undefined> = {}, // For env vars passed directly via CLI
-) {
-  const absoluteScriptPath = path.resolve(scriptPath);
-  if (!pathExistsSync(absoluteScriptPath)) {
-    logger.error(`Script file not found at ${absoluteScriptPath}`);
-    process.exit(1);
-  }
-
-  // Ensure tmpDir exists from config
-  if (!pathExistsSync(config.tmpDir)) {
-    try {
-      await fs.mkdir(config.tmpDir, { recursive: true });
-      console.log(chalk.gray(`Created temporary directory: ${config.tmpDir}`));
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      console.error(
-        chalk.red(
-          `Error creating temporary directory ${config.tmpDir}: ${errorMessage}`,
-        ),
-      );
-      process.exit(1);
-    }
-  }
-
-  const baseEnv = loadEnvironmentVariables(
-    config.envFiles.map((f) => path.resolve(f)),
-  );
-  const interpolatedDefaultParams = config.defaultParams
-    ? interpolateEnvVars(config.defaultParams, baseEnv)
-    : {};
-
-  // CLI-provided env vars take precedence over config default params, which take precedence over .env files
-  const fullEnv = {
-    ...baseEnv,
-    ...(typeof interpolatedDefaultParams === "object" &&
-    interpolatedDefaultParams !== null
-      ? interpolatedDefaultParams
-      : {}),
-    ...cliProvidedEnv,
-  };
-
-  logger.cliOutput(
-    chalk.cyan(`--- Running script: ${path.basename(absoluteScriptPath)} ---`),
-  ); // Use chalk directly for user-facing output styling
-  logger.cliOutput(
-    chalk.gray(`  Config file used: ${config.loadedConfigPath || "Defaults"}`),
-  );
-  logger.cliOutput(chalk.gray(`  Temp directory: ${config.tmpDir}`));
-  logger.cliOutput(
-    chalk.gray(`  Env files considered: ${config.envFiles.join(", ")}`),
-  );
-
-  // Create script executor with console interception enabled
-  const scriptExecutor = createScriptExecutorInstance({
-    consoleInterception: {
-      enabled: true, // Enable colored console interception
-      includeLevel: false, // Don't include log level prefix for cleaner output
-      preserveOriginal: false, // Don't call original console methods to avoid duplication
-      useColors: true, // Enable colors for different log levels
-    },
-  });
-
-  const context: ScriptContext = {
-    env: fullEnv,
-    tmpDir: config.tmpDir,
-    configPath: config.loadedConfigPath,
-    params: {},
-    log: (msg: string) =>
-      console.log(chalk.blueBright(`  [SCRIPT OUTPUT] ${msg}`)),
-  };
-
-  try {
-    const result = await scriptExecutor.run(absoluteScriptPath, context);
-    console.log(
-      chalk.green(
-        `--- Script ${path.basename(absoluteScriptPath)} finished successfully ---\n`,
-      ),
-    );
-    if (result !== undefined) {
-      console.log(
-        chalk.gray(
-          `     Script result: ${typeof result === "object" ? JSON.stringify(result) : result}`,
-        ),
-      );
-    }
-    process.exit(0); // Explicit success exit
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(
-      chalk.red(
-        `--- Error running script ${path.basename(absoluteScriptPath)} ---`,
-      ),
-    );
-    console.error(chalk.red(errorMessage));
-    console.error(
-      chalk.red(`--- Script ${path.basename(absoluteScriptPath)} failed ---\n`),
-    );
-    process.exit(1); // Explicit failure exit
-  }
-}
-
-program
   .command("exec <scriptPath>")
   .description("Execute a single script file directly.")
-  .option("-c, --config <path>", "Path to runner configuration file")
-  // Allow passing arbitrary env variables like VAR1=value1 VAR2=value2
-  .addOption(
-    new Option(
-      "-e, --env <vars...>",
-      "Set environment variables (e.g., NAME=Bun X=Y)",
-    ),
-  )
+  .addOption(CLI_OPTIONS.config)
+  .addOption(CLI_OPTIONS.env)
+  .addOption(CLI_OPTIONS.envPrompts)
   .action(async (scriptPath, options) => {
     // Load configuration (tmpDir, envFiles, defaultParams will be used from here)
     const config = await loadConfig(options.config);
@@ -446,17 +394,24 @@ program
       }
     }
 
-    await executeScriptFile(scriptPath, config, cliEnvVars);
+    // Process --env-prompts options
+    let envPromptsToPass: string[] = [];
+    if (options.envPrompts && Array.isArray(options.envPrompts)) {
+      envPromptsToPass = parseEnvPromptsList(options.envPrompts);
+    }
+
+    await executeScriptFile(scriptPath, config, cliEnvVars, envPromptsToPass);
   });
 
 program
   .command("run", { isDefault: true })
   .description("Run scripts using the interactive UI.")
-  .option("-c, --config <path>", "Path to runner configuration file")
-  .option("-s, --scripts-dir <dir>", "Override scripts directory from config")
-  .option("-t, --tmp-dir <dir>", "Override temporary directory from config")
-  .option("--no-tui", "Run without Terminal UI, just list available scripts")
-  .option("--force-tui", "Force TUI mode even when debug is enabled")
+  .addOption(CLI_OPTIONS.config)
+  .addOption(CLI_OPTIONS.scriptsDirOverride)
+  .addOption(CLI_OPTIONS.tmpDirOverride)
+  .addOption(CLI_OPTIONS.noTui)
+  .addOption(CLI_OPTIONS.forceTui)
+  .addOption(CLI_OPTIONS.envPrompts)
   .action(async (options) => {
     const config = await loadConfig(options.config);
 
@@ -505,7 +460,7 @@ program
 
     // If --no-tui is specified or in debug mode (unless --force-tui is specified), just list scripts without TUI
     if (
-      options.tui === false ||
+      options.noTui === true ||
       (process.env.SCRIPTIT_DEBUG === "true" && !options.forceTui)
     ) {
       console.log(chalk.blue("Running in non-TUI mode. Available scripts:"));
@@ -570,7 +525,8 @@ program
                 );
               }
             } catch (err: unknown) {
-              const errorMessage = err instanceof Error ? err.message : String(err);
+              const errorMessage =
+                err instanceof Error ? err.message : String(err);
               console.log(
                 chalk.yellow(`   Error loading script: ${errorMessage}`),
               );
@@ -609,3 +565,74 @@ program
 
 // Parse command line arguments and execute the appropriate command
 program.parse();
+
+// Function to execute a single script (will be used by 'exec' command and potentially by TUI later if refactored)
+async function executeScriptFile(
+  scriptPath: string,
+  config: RunnerConfig,
+  cliProvidedEnv: Record<string, string | undefined> = {}, // For env vars passed directly via CLI
+  cliEnvPrompts: string[] = [], // For --env-prompts from CLI
+) {
+  const prompter = new CLIEnvironmentPrompter();
+
+  const cliLogger = {
+    info: (msg: string) => logger.cliOutput(chalk.cyan(msg)),
+    warn: (msg: string) => logger.cliOutput(chalk.yellow(msg)),
+    error: (msg: string) => logger.cliOutput(chalk.red(msg)),
+  };
+
+  try {
+    logger.cliOutput(
+      chalk.cyan(`--- Running script: ${path.basename(scriptPath)} ---`),
+    );
+
+    const result = await executeScriptWithEnvironment({
+      scriptPath,
+      config,
+      cliProvidedEnv,
+      cliEnvPrompts,
+      prompter,
+      logger: {
+        info: (msg: string) => logger.cliOutput(chalk.gray(`  ${msg}`)),
+        warn: (msg: string) => console.warn(chalk.yellow(`  ${msg}`)),
+        error: (msg: string) => console.error(chalk.red(`  ${msg}`)),
+      },
+    });
+
+    console.log(
+      chalk.green(
+        `--- Script ${path.basename(scriptPath)} finished successfully ---\n`,
+      ),
+    );
+
+    if (result !== undefined) {
+      console.log(
+        chalk.gray(
+          `     Script result: ${typeof result === "object" ? JSON.stringify(result) : result}`,
+        ),
+      );
+    }
+
+    process.exit(0); // Explicit success exit
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(
+      chalk.red(`--- Error running script ${path.basename(scriptPath)} ---`),
+    );
+    console.error(chalk.red(errorMessage));
+    console.error(
+      chalk.red(`--- Script ${path.basename(scriptPath)} failed ---\n`),
+    );
+    process.exit(1); // Explicit failure exit
+  }
+}
+
+// CLI-specific environment prompter using readline
+class CLIEnvironmentPrompter implements EnvironmentPrompter {
+  async promptForVariables(
+    variables: VariableDefinition[],
+    existingEnv: Record<string, string | undefined>,
+  ): Promise<Record<string, string>> {
+    return promptForEnvironmentVariables(variables, existingEnv);
+  }
+}

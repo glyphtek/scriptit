@@ -4,10 +4,10 @@ import EventEmitter from "node:events"; // For the 'on' method
 import { existsSync as pathExistsSync } from "node:fs";
 import path from "node:path";
 import type {
+  ColoredConsole,
   RunnerConfig,
   ScriptContext,
   ScriptModule,
-  ColoredConsole,
 } from "./common/types/index.js";
 import { getScriptFiles } from "./common/utils/index.js"; // Import getScriptFiles for script discovery
 import {
@@ -29,12 +29,18 @@ export interface ScriptExecutionResult {
 
 // Event handler types
 export type ScriptEventHandler = {
-  'script:beforeExecute': (scriptPath: string, params: Record<string, unknown>) => void;
-  'script:afterExecute': (scriptPath: string, result: ScriptExecutionResult) => void;
-  'script:error': (scriptPath: string, error: unknown) => void;
-  'script:log': (scriptPath: string, message: string) => void;
-  'tui:beforeStart': () => void;
-  'tui:afterEnd': () => void;
+  "script:beforeExecute": (
+    scriptPath: string,
+    params: Record<string, unknown>,
+  ) => void;
+  "script:afterExecute": (
+    scriptPath: string,
+    result: ScriptExecutionResult,
+  ) => void;
+  "script:error": (scriptPath: string, error: unknown) => void;
+  "script:log": (scriptPath: string, message: string) => void;
+  "tui:beforeStart": () => void;
+  "tui:afterEnd": () => void;
 };
 
 export interface CreateScriptRunnerOptions
@@ -183,7 +189,9 @@ export async function createScriptRunner(
         tmpDir: effectiveConfig.tmpDir,
         configPath: effectiveConfig.loadedConfigPath,
         log: contextLog,
-        params: (params.params as Record<string, unknown>) || ({} as Record<string, unknown>), // User-defined params for the script
+        params:
+          (params.params as Record<string, unknown>) ||
+          ({} as Record<string, unknown>), // User-defined params for the script
         // Spread other potential context items defined in RunnerConfig or executionParams
         ...(effectiveConfig.defaultParams || {}), // Already interpolated when finalEnvironment was created
         ...(params.contextOverrides || {}), // Allow deep override of context

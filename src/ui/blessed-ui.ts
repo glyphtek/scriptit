@@ -4,9 +4,17 @@ import path from "node:path";
 import blessed from "blessed";
 import chalk from "chalk";
 import { logger } from "../common/logger/index.js";
-import type { ScriptContext, ScriptModule } from "../common/types/index.js";
-import { getScriptFiles } from "../common/utils/index.js";
-import { createScriptExecutorInstance } from "../core/script-executor.js";
+import type {
+  RunnerConfig,
+  ScriptContext,
+  ScriptModule,
+} from "../common/types/index.js";
+import { getScriptFiles, loadConfig } from "../common/utils/index.js";
+import {
+  createScriptExecutorInstance,
+  executeScriptWithEnvironment,
+} from "../core/script-executor.js";
+import { TUIEnvironmentPrompter } from "./tui-prompter.js";
 
 /**
  * Main TUI implementation using blessed
@@ -27,6 +35,10 @@ export async function runTUI(
       fullUnicode: true,
       autoPadding: false,
     });
+
+    // Load full config for the TUI to use
+    const config: RunnerConfig = await loadConfig(configPath);
+    config.loadedConfigPath = configPath;
 
     // --- State for Focus and Visibility ---
     let currentFocus: "fileList" | "outputLog" = "fileList";
@@ -108,6 +120,9 @@ export async function runTUI(
       hidden: true,
     });
 
+    // Create TUI-specific environment prompter
+    const tuiPrompter = new TUIEnvironmentPrompter(screen, outputLog);
+
     // --- Helper Functions ---
     function updateConfigBox() {
       let content = `{yellow-fg}Config File:{/} ${configPath ? path.basename(configPath) : "Default"}\n`;
@@ -115,8 +130,14 @@ export async function runTUI(
       content += `{yellow-fg}Temp Dir:{/} ${path.relative(process.cwd(), initialTmpDir)}\n`;
       content += `{yellow-fg}Env Vars:{/} ${Object.keys(initialEnv).length} loaded\n`;
 
-      const excludePatterns = initialConfigValues.excludePatterns as string[] | undefined;
-      if (excludePatterns && Array.isArray(excludePatterns) && excludePatterns.length > 0) {
+      const excludePatterns = initialConfigValues.excludePatterns as
+        | string[]
+        | undefined;
+      if (
+        excludePatterns &&
+        Array.isArray(excludePatterns) &&
+        excludePatterns.length > 0
+      ) {
         content += `{yellow-fg}Exclude:{/} ${excludePatterns.join(", ")}\n`;
       }
 
@@ -127,7 +148,8 @@ export async function runTUI(
       outputLog.log("Populating script list...");
 
       try {
-        const excludePatterns = (initialConfigValues.excludePatterns as string[]) || [];
+        const excludePatterns =
+          (initialConfigValues.excludePatterns as string[]) || [];
         const scriptPaths = await getScriptFiles(
           initialScriptsDir,
           excludePatterns,
@@ -212,35 +234,39 @@ export async function runTUI(
       const relativePath = path.relative(initialScriptsDir, scriptPath);
 
       outputLog.log(`\n{green-fg}=== Running ${relativePath} ==={/}`);
-
-      // Create script executor with console interception enabled
-      const scriptExecutor = createScriptExecutorInstance({
-        consoleInterception: {
-          enabled: true,
-          includeLevel: false, // Don't include log level prefix for cleaner TUI output
-          preserveOriginal: false, // Don't call original console methods to avoid duplication
-          useColors: true, // Enable colors for different log levels
-        },
-      });
-
-      const context: ScriptContext = {
-        env: initialEnv,
-        tmpDir: initialTmpDir,
-        configPath: configPath,
-        params: {},
-        log: (message: string) => {
-          outputLog.log(`  ${message}`);
-          screen.render();
-        },
-      };
+      screen.render();
 
       try {
-        const result = await scriptExecutor.run(scriptPath, context);
+        const result = await executeScriptWithEnvironment({
+          scriptPath,
+          config,
+          cliProvidedEnv: {}, // TUI doesn't have CLI env vars
+          cliEnvPrompts: [], // TUI doesn't have CLI env prompts
+          prompter: tuiPrompter,
+          logger: {
+            info: (msg: string) => {
+              outputLog.log(`  {gray-fg}${msg}{/}`);
+              screen.render();
+            },
+            warn: (msg: string) => {
+              outputLog.log(`  {yellow-fg}${msg}{/}`);
+              screen.render();
+            },
+            error: (msg: string) => {
+              outputLog.log(`  {red-fg}${msg}{/}`);
+              screen.render();
+            },
+          },
+        });
+
         outputLog.log(
           `{green-fg}=== ${relativePath} completed successfully ==={/}\n`,
         );
+
         if (result !== undefined) {
-          outputLog.log(`  Result: ${typeof result === "object" ? JSON.stringify(result) : result}`);
+          outputLog.log(
+            `  Result: ${typeof result === "object" ? JSON.stringify(result) : result}`,
+          );
         }
       } catch (error: unknown) {
         outputLog.log(

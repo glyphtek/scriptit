@@ -276,6 +276,139 @@ export async function execute(context) {
 }
 ```
 
+### Interactive Environment Variable Prompting
+
+The TUI now supports interactive collection of environment variables through beautiful modal dialogs, providing the same functionality as the CLI but with a visual interface.
+
+#### Modal Prompting Interface
+
+When a script requires environment variables, the TUI displays modal dialogs:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          🔐 Environment Variable                    │
+│                                                                     │
+│  Enter your API key:                                               │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ ********                                                    │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│  [Enter] Submit • [Escape] Cancel • [Tab] Empty value             │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### Declarative Variable Definition
+
+Scripts can declare required environment variables:
+
+```javascript
+// interactive-script.js
+export const description = "Script with environment prompts";
+
+// Define required environment variables
+export const variables = [
+  { name: 'API_KEY', message: 'Enter your API key:', type: 'password' },
+  { name: 'USER_NAME', message: 'Enter your username:', type: 'input' },
+  'ENVIRONMENT',  // Shorthand for simple variables
+  'DEBUG_MODE'
+];
+
+export async function execute(context) {
+  const console = context.console || global.console;
+  
+  // Variables are automatically collected and available
+  console.log(`Username: ${context.env.USER_NAME}`);
+  console.log(`Environment: ${context.env.ENVIRONMENT}`);
+  console.log(`API Key: ${context.env.API_KEY ? '***hidden***' : 'Not set'}`);
+  
+  return { success: true };
+}
+```
+
+#### Smart Variable Detection
+
+The TUI automatically detects which variables need to be collected:
+
+- **Skip existing** - Variables already set in environment are not prompted
+- **Batch collection** - Collects multiple variables in sequence
+- **Type-aware prompting** - Password fields are masked, input fields are visible
+- **Cancellable** - Users can skip variables or cancel the entire process
+
+#### Variable Types
+
+The TUI supports different input types:
+
+**Password Fields:**
+```javascript
+{ name: 'API_KEY', type: 'password', message: 'Enter API key:' }
+```
+- Input is masked with `*` characters
+- Content is hidden from display
+- Values are not logged for security
+
+**Input Fields:**
+```javascript
+{ name: 'USER_NAME', type: 'input', message: 'Enter username:' }
+```
+- Regular text input
+- Content is visible as typed
+- Default type if not specified
+
+#### Modal Controls
+
+**Keyboard Controls:**
+- `Enter` - Submit the current value
+- `Escape` - Skip this variable (sets empty value)
+- `Tab` - Submit empty value explicitly
+- `Backspace` - Delete characters
+- `Arrow Keys` - Navigate within input field
+
+**Visual Feedback:**
+- **🔐 Icon** - Indicates password fields
+- **📝 Icon** - Indicates regular input fields
+- **Color coding** - Yellow for passwords, cyan for input
+- **Progress indication** - Shows which variable is being collected
+
+#### Example Workflow
+
+```javascript
+// deployment-script.js
+export const description = "Deploy with environment prompts";
+
+export const variables = [
+  { name: 'DEPLOY_ENV', message: 'Target environment (prod/staging):', type: 'input' },
+  { name: 'API_TOKEN', message: 'Deployment API token:', type: 'password' },
+  { name: 'CONFIRM_DEPLOY', message: 'Confirm deployment (yes/no):', type: 'input' }
+];
+
+export async function execute(context) {
+  const console = context.console || global.console;
+  
+  // Validate input
+  if (context.env.CONFIRM_DEPLOY?.toLowerCase() !== 'yes') {
+    console.warn('Deployment cancelled by user');
+    return { cancelled: true };
+  }
+  
+  console.info(`🚀 Deploying to ${context.env.DEPLOY_ENV}...`);
+  
+  // Use the collected variables
+  const response = await deploy({
+    environment: context.env.DEPLOY_ENV,
+    token: context.env.API_TOKEN
+  });
+  
+  console.log('✅ Deployment successful!');
+  return response;
+}
+```
+
+#### Security Features
+
+- **No logging** - Prompted values are never displayed in output logs
+- **Memory isolation** - Values are cleared after script execution
+- **Visual masking** - Password fields show `*` characters only
+- **Process isolation** - Values are only available during script execution
+
 ### Multi-Panel Layout
 
 The TUI supports different layout modes:

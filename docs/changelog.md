@@ -5,6 +5,116 @@ All notable changes to ScriptIt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-01-29
+
+### Added
+- **Unified Script Execution Architecture**: Complete architectural refactoring for better maintainability
+  - **Shared Execution Engine**: Created `executeScriptWithEnvironment()` function in `src/core/script-executor.ts`
+  - **Interface Abstraction**: `EnvironmentPrompter` interface enables different UI approaches for variable collection
+  - **Consistent Environment Handling**: Unified environment variable precedence across CLI and TUI
+- **Enhanced TUI Environment Prompting**: Beautiful modal dialogs for environment variable collection
+  - **Modal Interface**: Centered dialogs with visual feedback and keyboard controls
+  - **Type-Aware Prompting**: Password masking and input field differentiation
+  - **Visual Indicators**: Icons and color coding for different variable types
+  - **Smart Integration**: Seamless integration with existing TUI layout
+- **CLI Architecture Improvements**: Major refactoring for better code organization
+  - **Centralized Options**: `CLI_OPTIONS` constant eliminates ~20 lines of duplicate code
+  - **Shared Execution Logic**: CLI and TUI now use the same core execution engine
+  - **Enhanced Prompter**: Improved readline-based prompting with password masking
+
+### Enhanced
+- **Code Maintainability**: Significant reduction in code duplication across CLI and TUI
+- **Environment Variable System**: Enhanced precedence handling and cross-interface consistency
+- **Documentation**: Comprehensive architecture guide and updated feature documentation
+- **Type Safety**: Improved TypeScript interfaces and type consistency
+- **Security**: Enhanced password handling with proper masking and no-logging policies
+
+### Technical
+- **Core Module**: New `src/core/script-executor.ts` with shared execution logic
+- **TUI Prompter**: New `src/ui/tui-prompter.ts` for modal-based environment prompting
+- **Interface Consistency**: Both CLI and TUI use identical environment variable handling
+- **Error Handling**: Improved error propagation and user feedback
+- **Testing**: All 31 tests continue to pass with enhanced functionality
+
+### Architecture
+- **Separation of Concerns**: Clear separation between interface logic and core execution
+- **Extensibility**: Pluggable prompter system enables future interface additions
+- **Backward Compatibility**: All existing functionality preserved while adding new capabilities
+- **Performance**: Optimized execution flow with reduced redundancy
+
+### Documentation
+- **Architecture Guide**: New comprehensive guide explaining the unified system
+- **TUI Documentation**: Enhanced with modal prompting examples and workflows
+- **API Documentation**: Updated to reflect new interfaces and capabilities
+- **VitePress Integration**: Improved documentation site with better navigation
+
+### Migration Notes
+
+This is a backward-compatible architectural improvement. Existing scripts continue to work unchanged.
+
+**New Capabilities:**
+- TUI now supports the same environment variable prompting as CLI
+- Both interfaces provide consistent variable precedence and handling
+- Enhanced modal dialogs in TUI for better user experience
+- Improved code maintainability for future development
+
+**Internal Changes:**
+- Script execution moved from CLI-specific to shared core module
+- Environment prompting abstracted behind common interface
+- Reduced code duplication and improved maintainability
+
+## [0.6.0] - 2025-01-29
+
+### Added
+- **Interactive Environment Prompts**: Revolutionary new feature for secure environment variable collection
+  - **Declarative Method**: Scripts can export `variables` to define required inputs with custom prompts and types
+  - **Imperative Method**: Use `--env-prompts` CLI flag to prompt for any variables on demand
+  - **Smart Detection**: Only prompts for variables that aren't already set in the environment
+  - **Password Masking**: Secure input for sensitive data with hidden characters (`*`)
+  - **Variable Types**: Support for `input` (default) and `password` types
+  - **Mixed Format Support**: Shorthand (string array) and full definition (object array) formats
+- **Enhanced CLI Options**: Added `--env-prompts <vars...>` option to both `exec` and `run` commands
+- **Execution Priority System**: Intelligent merging of environment sources with proper precedence
+
+### Enhanced
+- **Script Module Interface**: Extended with optional `variables` property for declarative environment prompts
+- **Context Environment**: All prompted variables automatically available in `context.env`
+- **Security**: Prompted values are process-isolated and not logged in output
+- **User Experience**: Clear prompting flow with colored output and progress indicators
+
+### Technical
+- **New Utilities**: Added comprehensive prompting utilities in `src/common/utils/prompt.ts`
+- **Type Safety**: Enhanced TypeScript interfaces for `VariableDefinition` and environment handling
+- **Cross-Platform**: Readline-based prompting works consistently across all supported runtimes
+- **Error Handling**: Graceful handling of script loading errors during variable detection
+
+### Examples
+- **Interactive Example Script**: Added `examples/ui/scripts/interactive-example.ts` demonstrating all features
+- **Documentation**: Comprehensive documentation with usage examples and security guidance
+
+### Migration Notes
+
+This is a backward-compatible feature addition. Existing scripts continue to work unchanged.
+
+**New Capabilities:**
+```typescript
+// Declarative method - in your script
+export const variables = [
+  { name: 'API_KEY', message: 'Enter API key:', type: 'password' },
+  'DATABASE_URL'  // Shorthand
+];
+
+export async function execute(context) {
+  // Prompted variables available in context.env
+  console.log(context.env.API_KEY); // Securely collected
+}
+```
+
+```bash
+# Imperative method - via CLI
+scriptit exec script.js --env-prompts API_KEY,SECRET_TOKEN
+```
+
 ## [0.5.1] - 2025-01-29
 
 ### Fixed

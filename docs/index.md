@@ -101,6 +101,22 @@ await runner.executeScript('my-script.js')
 - 🔧 **Type Safety**: Better TypeScript types with `unknown[]` instead of `any[]`
 - ✅ **Better CLI Documentation**: Corrected and expanded CLI command documentation
 
+## What's New in v0.6.0
+
+- 🎯 **Interactive Environment Prompts**: Revolutionary secure variable collection system
+- 📝 **Declarative Variables**: Scripts can export `variables` to define required inputs  
+- 🔐 **Password Masking**: Secure input for sensitive data with hidden characters
+- 🎛️ **CLI Integration**: New `--env-prompts` flag for on-demand variable prompting
+- 🔄 **Smart Detection**: Only prompts for variables that aren't already set
+
+## What's New in v0.7.0
+
+- 🏗️ **Unified Architecture**: Complete refactoring with shared execution engine across CLI and TUI
+- 🎨 **Enhanced TUI Prompting**: Beautiful modal dialogs for environment variable collection
+- 🔧 **CLI Improvements**: Centralized options and reduced code duplication
+- 📚 **Architecture Guide**: Comprehensive documentation of the new unified system
+- ⚡ **Better Maintainability**: Significant code organization improvements for future development
+
 ## Why ScriptIt?
 
 ScriptIt bridges the gap between different JavaScript runtimes, providing a unified interface for script execution with enhanced developer experience. Whether you're prototyping, automating tasks, or building complex workflows, ScriptIt offers the tools you need with the flexibility to work across any runtime.
