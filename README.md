@@ -368,6 +368,12 @@ ScriptIt follows this order when collecting environment variables:
 4. **Interactive Collection**: Prompt for any missing variables
 5. **Script Execution**: All variables available in `context.env`
 
+**Final Environment Precedence (highest to lowest):**
+1. **Prompted Variables** - Collected interactively 
+2. **CLI Arguments** (`--env NAME=value`) - CLI-provided environment variables
+3. **Config Default Params** - From runner.config.js
+4. **Environment Files** - .env, .env.local, etc.
+
 ### Security Features
 
 - **Password masking**: Sensitive inputs are hidden with `*` characters

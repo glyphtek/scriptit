@@ -5,6 +5,38 @@ All notable changes to ScriptIt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2025-01-29
+
+### Fixed
+- **Documentation Accuracy**: Corrected environment variable precedence order in all documentation
+  - **Environment Documentation**: Fixed `docs/cli/environment.md` precedence order to match actual implementation
+  - **Architecture Guide**: Updated precedence order in `docs/guides/architecture.md`
+  - **README**: Fixed environment precedence order to reflect actual code behavior
+- **TypeScript Types**: Removed unsupported `"confirm"` type from `VariableDefinition` interface
+  - Only `"input"` and `"password"` types are actually implemented and documented
+  - Prevents confusion about unsupported features
+
+### Enhanced
+- **Interactive Prompting Documentation**: Added comprehensive section to `docs/cli/environment.md`
+  - Detailed examples of `--env-prompts` flag usage
+  - Declarative variable definition documentation
+  - Variable types and security features explanation
+  - Smart variable detection behavior
+
+### Technical
+- **Type Safety**: Improved TypeScript interface accuracy
+- **Documentation Consistency**: All documentation now accurately reflects code implementation
+- **No Breaking Changes**: All existing functionality remains intact
+
+### Corrected Environment Variable Precedence
+
+The documentation now correctly reflects the actual implementation:
+
+1. **Prompted Variables** - Collected interactively (Highest priority)
+2. **CLI Arguments** (`--env NAME=value`) - CLI-provided environment variables  
+3. **Config Default Params** - From runner.config.js
+4. **Environment Files** - .env, .env.local, etc. (Lowest priority)
+
 ## [0.7.0] - 2025-01-29
 
 ### Added

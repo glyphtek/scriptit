@@ -30,7 +30,7 @@ export default defineConfig({
       { text: 'Library', link: '/library/api' },
       { text: 'Examples', link: '/examples/' },
       {
-        text: 'v0.7.0',
+        text: 'v0.7.1',
         items: [
           { text: 'Changelog', link: '/changelog' },
           { text: 'Contributing', link: '/contributing' },

@@ -106,7 +106,7 @@ program
   .description(
     "ScriptIt - A powerful CLI and library for running scripts with environment management, TUI, and support for lambda functions",
   )
-  .version("0.7.0")
+  .version("0.7.1")
   .addOption(CLI_OPTIONS.debug)
   .addOption(CLI_OPTIONS.pwd)
   .hook("preAction", (thisCommand, actionCommand) => {

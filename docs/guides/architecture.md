@@ -177,11 +177,10 @@ export const variables = ['API_KEY', 'DATABASE_URL', 'SECRET_TOKEN'];
 
 ScriptIt follows a clear precedence order for environment variables:
 
-1. **CLI Arguments** (`--env NAME=value`) - Highest priority
-2. **Prompted Variables** - Collected interactively
+1. **Prompted Variables** - Collected interactively (Highest priority)
+2. **CLI Arguments** (`--env NAME=value`) - CLI-provided environment variables
 3. **Config Default Params** - From runner.config.js
-4. **Environment Files** - .env, .env.local, etc.
-5. **System Environment** - process.env variables
+4. **Environment Files** - .env, .env.local, etc. (Lowest priority)
 
 ## Console Interception
 

@@ -117,6 +117,13 @@ await runner.executeScript('my-script.js')
 - 📚 **Architecture Guide**: Comprehensive documentation of the new unified system
 - ⚡ **Better Maintainability**: Significant code organization improvements for future development
 
+## What's New in v0.7.1
+
+- 🔧 **Documentation Fixes**: Corrected environment variable precedence order across all documentation
+- 📚 **Enhanced Environment Docs**: Added comprehensive interactive prompting section to CLI environment guide
+- 🛠️ **Type Accuracy**: Removed unsupported `"confirm"` type from TypeScript interfaces
+- ✅ **Consistency**: All documentation now accurately reflects actual code implementation
+
 ## Why ScriptIt?
 
 ScriptIt bridges the gap between different JavaScript runtimes, providing a unified interface for script execution with enhanced developer experience. Whether you're prototyping, automating tasks, or building complex workflows, ScriptIt offers the tools you need with the flexibility to work across any runtime.

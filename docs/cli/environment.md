@@ -6,20 +6,23 @@ ScriptIt provides comprehensive environment variable management, allowing you to
 
 Environment variables in ScriptIt can be set through:
 
-1. **System environment variables** - `export VAR=value`
-2. **`.env` files** - Loaded automatically
-3. **Command-line flags** - `--env VAR=value`
-4. **Configuration files** - `scriptit.config.js`
+1. **Interactive prompts** - `--env-prompts` flag or script `variables` export
+2. **Command-line flags** - `--env VAR=value`
+3. **Configuration files** - `scriptit.config.js` defaultParams
+4. **`.env` files** - Loaded automatically
+5. **System environment variables** - `export VAR=value`
 
 ## Environment Variable Priority
 
 Variables are applied in the following order (highest to lowest priority):
 
-1. **Command-line flags** - `--env VAR=value`
-2. **System environment variables** - `export VAR=value`
-3. **Configuration file** - `env` property in config
-4. **`.env` file** - Loaded from project root
-5. **Default values** - Built-in defaults
+1. **Interactive prompts** - Variables collected via `--env-prompts` or script `variables` export
+2. **Command-line flags** - `--env VAR=value`
+3. **Configuration file** - `defaultParams` property in config
+4. **`.env` files** - Loaded from project root and other configured files
+5. **System environment variables** - `export VAR=value`
+
+**Note:** Variables that are already set (from any source) will not be prompted for interactively, ensuring no accidental overwrites.
 
 ## Using .env Files
 
@@ -190,6 +193,72 @@ scriptit exec --env NODE_ENV=production --env DEBUG=false --env PORT=8080 script
 # With spaces (use quotes)
 scriptit exec --env APP_NAME="My App" --env DESCRIPTION="A great app" script.js
 ```
+
+### Interactive Environment Prompts
+
+ScriptIt supports interactive collection of environment variables, providing a secure way to input sensitive data without exposing it in command history or scripts.
+
+#### Using --env-prompts Flag
+
+```bash
+# Prompt for specific variables before execution
+scriptit exec --env-prompts API_KEY,SECRET_TOKEN script.js
+
+# Space-separated format also works
+scriptit exec --env-prompts API_KEY SECRET_TOKEN script.js
+
+# Mix static and prompted variables
+scriptit exec --env NODE_ENV=production --env-prompts API_KEY,DATABASE_PASSWORD script.js
+
+# Works with TUI as well
+scriptit run --env-prompts DATABASE_URL,API_KEY
+```
+
+#### Declarative Variable Definition in Scripts
+
+Scripts can declare their required environment variables using the `variables` export:
+
+```javascript
+// deployment-script.js
+export const description = "Deploy application with secure prompts";
+
+// Full definition with custom prompts and types
+export const variables = [
+  { name: 'API_KEY', message: 'Enter your API key:', type: 'password' },
+  { name: 'DEPLOY_ENV', message: 'Target environment (prod/staging):', type: 'input' },
+  'CONFIRM_DEPLOY'  // Shorthand - generates default prompt
+];
+
+export async function execute(context) {
+  const console = context.console || global.console;
+  
+  // Variables are automatically prompted and available in context.env
+  console.log(`Deploying to: ${context.env.DEPLOY_ENV}`);
+  console.log(`API Key: ${context.env.API_KEY ? '***hidden***' : 'Not set'}`);
+  
+  if (context.env.CONFIRM_DEPLOY?.toLowerCase() !== 'yes') {
+    console.warn('Deployment cancelled by user');
+    return { cancelled: true };
+  }
+  
+  // Proceed with deployment...
+  return { success: true };
+}
+```
+
+#### Variable Types
+
+- **`input`** (default): Regular text input, content visible as typed
+- **`password`**: Hidden input with masked characters (`*`)
+
+#### Smart Variable Detection
+
+ScriptIt automatically detects which variables need to be collected:
+
+- **Skip existing** - Variables already set in environment are not prompted
+- **Combine sources** - CLI `--env-prompts` + script `variables` export
+- **Precedence handling** - CLI prompts take precedence over script declarations
+- **Security first** - Prompted values are never logged or displayed
 
 ### Combining with Other Options
 

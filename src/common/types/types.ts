@@ -11,7 +11,7 @@ export interface ColoredConsole {
 export interface VariableDefinition {
   name: string;
   message?: string;
-  type?: "input" | "password" | "confirm";
+  type?: "input" | "password";
 }
 
 export interface ScriptContext {
