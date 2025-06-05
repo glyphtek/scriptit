@@ -55,6 +55,7 @@
   ],
   "scripts": {
     "build": "bun clean && tsc",
+    "build:node": "npm run clean:node && tsc",
     "build:bun": "bun clean && bun build ./src/lib.ts ./src/cli.ts --outdir ./dist --target bun --splitting --minify",
     "dev": "./bin/scriptit.sh",
     "dev:watch": "bun --watch ./bin/scriptit.sh",
@@ -63,6 +64,7 @@
     "format": "bunx @biomejs/biome format --write ./src",
     "check": "bunx @biomejs/biome check --apply ./src",
     "clean": "rm -rf dist",
+    "clean:node": "rm -rf dist",
     "prepublishOnly": "bun run build && bun test",
     "test": "bun test",
     "test:node": "node --test tests/*.test.js || echo 'Node.js native test runner not fully compatible - build verification only'",

@@ -49,7 +49,7 @@ jobs:
 
       - name: Build project (Node)
         if: matrix.runtime == 'node'
-        run: npm run build
+        run: npm run build:node
 
       - name: Run tests (Bun)
         if: matrix.runtime == 'bun'
