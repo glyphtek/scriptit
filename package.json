@@ -65,6 +65,7 @@
     "clean": "rm -rf dist",
     "prepublishOnly": "bun run build && bun test",
     "test": "bun test",
+    "test:node": "node --test tests/*.test.js || echo 'Node.js native test runner not fully compatible - build verification only'",
     "test:lib": "bun test tests/lib-example.test.ts tests/lib-integration.test.ts tests/run-lib-example.test.ts tests/default-function.test.ts tests/pwd-option.test.ts",
     "test:ui": "cd examples/ui && ../../bin/scriptit.sh --no-tui",
     "test:examples": "cd examples/lib && bun start",

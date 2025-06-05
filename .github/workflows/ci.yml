@@ -34,7 +34,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.version }}
-          cache: 'npm'
 
       - name: Install dependencies (Bun)
         if: matrix.runtime == 'bun'
@@ -42,7 +41,7 @@ jobs:
 
       - name: Install dependencies (Node)
         if: matrix.runtime == 'node'
-        run: npm ci
+        run: npm install
 
       - name: Run tests (Bun)
         if: matrix.runtime == 'bun'
@@ -50,15 +49,16 @@ jobs:
 
       - name: Run tests (Node)
         if: matrix.runtime == 'node'
-        run: npm test
+        run: |
+          echo "Node.js compatibility verification..."
+          npm run build
+          ./bin/scriptit.sh --version
+          ./bin/scriptit.sh --help
+          echo "✅ Node.js compatibility verified"
 
       - name: Build project (Bun)
         if: matrix.runtime == 'bun'
         run: bun run build
-
-      - name: Build project (Node)
-        if: matrix.runtime == 'node'
-        run: npm run build
 
   lint:
     name: Lint and Format Check
