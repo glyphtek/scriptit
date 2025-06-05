@@ -591,6 +591,92 @@ We welcome contributions! Ways to help:
 - **Documentation:** Improve guides and examples
 - **Community:** Help others in discussions
 
+## 🤝 Contributing
+
+We welcome contributions from the community! ScriptIt is an open source project that thrives on collaboration.
+
+### Quick Start for Contributors
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork** locally: `git clone https://github.com/YOUR_USERNAME/scriptit.git`
+3. **Create a feature branch** from `develop`: `git checkout -b feature/your-feature-name`
+4. **Make your changes** with tests and documentation
+5. **Submit a pull request** to the `develop` branch
+
+### Development Setup
+
+```bash
+# Install dependencies
+bun install
+
+# Run tests
+bun test
+
+# Build project
+bun run build
+
+# Lint and format
+bun run check
+```
+
+### What We're Looking For
+
+- 🐛 **Bug fixes** - Help us squash issues
+- ✨ **New features** - Enhance ScriptIt's capabilities  
+- 📚 **Documentation** - Improve guides and examples
+- 🧪 **Tests** - Increase coverage and reliability
+- 🎨 **UI/UX** - Make the TUI even better
+- ⚡ **Performance** - Optimize for speed and memory
+
+### Project Structure
+
+- **`src/cli.ts`** - Command-line interface
+- **`src/lib.ts`** - Library API
+- **`src/core/`** - Core execution engine
+- **`src/ui/`** - Terminal UI components
+- **`src/common/`** - Shared utilities and types
+- **`docs/`** - Documentation and guides
+- **`examples/`** - Usage examples
+
+For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## 📋 Project Status
+
+### Branch Protection
+
+- **`main`** - Protected production branch
+- **`develop`** - Integration branch for new features
+- All changes require pull requests with:
+  - ✅ Passing tests
+  - ✅ Code review approval
+  - ✅ CI/CD checks
+
+### Quality Assurance
+
+- **Automated Testing** - 31+ tests across multiple runtimes
+- **Continuous Integration** - GitHub Actions for testing, linting, and building
+- **Cross-Runtime Support** - Tested on Bun, Node.js, and Deno
+- **Security Scanning** - Automated vulnerability detection
+- **Documentation** - Comprehensive guides and API documentation
+
+### Release Process
+
+1. **Feature Development** - Work in feature branches
+2. **Pull Request** - Submit to `develop` branch
+3. **Code Review** - Maintainer review and approval
+4. **Integration Testing** - Automated CI/CD pipeline
+5. **Release** - Tagged releases with automated NPM publishing
+
+## 🔒 Security
+
+Security is a top priority for ScriptIt. We follow responsible disclosure practices:
+
+- **Report vulnerabilities** to security@glyphtek.com
+- **Security updates** are released promptly
+- **Supported versions** receive security patches
+
+See [SECURITY.md](SECURITY.md) for our complete security policy.
+
 ## License
 
 MIT License - see the [LICENSE](LICENSE) file for details.
