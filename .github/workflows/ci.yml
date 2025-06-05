@@ -43,6 +43,14 @@ jobs:
         if: matrix.runtime == 'node'
         run: npm install
 
+      - name: Build project (Bun)
+        if: matrix.runtime == 'bun'
+        run: bun run build
+
+      - name: Build project (Node)
+        if: matrix.runtime == 'node'
+        run: npm run build
+
       - name: Run tests (Bun)
         if: matrix.runtime == 'bun'
         run: bun test
@@ -51,14 +59,9 @@ jobs:
         if: matrix.runtime == 'node'
         run: |
           echo "Node.js compatibility verification..."
-          npm run build
           ./bin/scriptit.sh --version
           ./bin/scriptit.sh --help
           echo "✅ Node.js compatibility verified"
-
-      - name: Build project (Bun)
-        if: matrix.runtime == 'bun'
-        run: bun run build
 
   lint:
     name: Lint and Format Check
